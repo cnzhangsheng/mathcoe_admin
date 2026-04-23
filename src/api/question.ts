@@ -10,6 +10,7 @@ export interface Question {
   answer: string
   explanation: { text?: string; format?: string } | null
   difficulty: string | null
+  level: number | null  // 级别 1-6
   source_year: number | null
   tags: string[] | null
   created_at: string | null
@@ -18,13 +19,14 @@ export interface Question {
 
 export interface QuestionCreate {
   title: string
-  topic_id?: number
+  topic_id: number  // 所属专题，必选
   content?: { text: string; format?: string }
   question_type?: string
   options?: { label: string; text: string; format?: string }[]
   answer: string
   explanation?: { text: string; format?: string }
   difficulty?: string
+  level: number  // 级别 1-6，必选
   source_year?: number
   tags?: string[]
 }
@@ -38,6 +40,7 @@ export interface QuestionUpdate {
   answer?: string
   explanation?: { text: string; format?: string }
   difficulty?: string
+  level?: number  // 级别 1-6
   source_year?: number
   tags?: string[]
 }
@@ -47,6 +50,7 @@ export interface QuestionListParams {
   size?: number
   topic_id?: number
   difficulty?: string
+  level?: number  // 级别 1-6
 }
 
 export const questionApi = {

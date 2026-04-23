@@ -28,6 +28,16 @@ const routes = [
         component: () => import('@/views/Topics.vue')
       },
       {
+        path: 'exam-papers',
+        name: 'ExamPapers',
+        component: () => import('@/views/ExamPapers.vue')
+      },
+      {
+        path: 'exam-papers/:id',
+        name: 'ExamPaperDetail',
+        component: () => import('@/views/ExamPaperDetail.vue')
+      },
+      {
         path: 'questions',
         name: 'Questions',
         component: () => import('@/views/Questions.vue')
