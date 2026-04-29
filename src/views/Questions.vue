@@ -12,8 +12,7 @@ const loading = ref(false)
 const page = ref(1)
 const size = ref(20)
 const topicFilter = ref<number | undefined>(undefined)
-const difficultyFilter = ref<string | undefined>(undefined)
-const levelFilter = ref<number | undefined>(undefined)
+const difficultyLevelFilter = ref<number | undefined>(undefined)
 const total = ref(0)
 
 const selectedQuestions = ref<Question[]>([])
@@ -31,8 +30,7 @@ const formData = ref<{
   answer: string
   answerMultiple: string[]
   explanation_html: string
-  difficulty: string
-  level: number | undefined
+  difficulty_level: number | undefined
   source_year: number | undefined
 }>({
   title: '',
@@ -48,8 +46,7 @@ const formData = ref<{
   answer: '',
   answerMultiple: [],
   explanation_html: '',
-  difficulty: '',
-  level: undefined,
+  difficulty_level: undefined,
   source_year: undefined
 })
 
@@ -74,13 +71,12 @@ const loadQuestions = async () => {
   loading.value = true
   selectedQuestions.value = []
   try {
-    const params: { page: number; size: number; topic_id?: number; difficulty?: string; level?: number } = {
+    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number } = {
       page: page.value,
       size: size.value
     }
     if (topicFilter.value) params.topic_id = topicFilter.value
-    if (difficultyFilter.value) params.difficulty = difficultyFilter.value
-    if (levelFilter.value) params.level = levelFilter.value
+    if (difficultyLevelFilter.value) params.difficulty_level = difficultyLevelFilter.value
     questions.value = await questionApi.list(params)
     const countResult = await questionApi.getCount(topicFilter.value)
     total.value = countResult?.total || 0
@@ -136,8 +132,7 @@ const openCreate = () => {
     answer: '',
     answerMultiple: [],
     explanation_html: '',
-    difficulty: '',
-    level: undefined,
+    difficulty_level: undefined,
     source_year: undefined
   }
   showDialog.value = true
@@ -168,8 +163,7 @@ const openEdit = (question: Question) => {
     answer: question.question_type === 'multiple' ? '' : question.answer,
     answerMultiple: question.question_type === 'multiple' ? question.answer.split(',') : [],
     explanation_html: explanationHtml,
-    difficulty: question.difficulty || '',
-    level: question.level,
+    difficulty_level: question.difficulty_level,
     source_year: question.source_year
   }
   showDialog.value = true
@@ -179,7 +173,7 @@ const handleSubmit = async () => {
   if (submitting.value) return
 
   // 必选字段验证
-  if (!formData.value.level) {
+  if (!formData.value.difficulty_level) {
     ElMessage.warning('请选择题目级别')
     return
   }
@@ -237,8 +231,7 @@ const handleSubmit = async () => {
       })),
       answer: answerStr,
       explanation: { text: formData.value.explanation_html, format: 'html' },
-      difficulty: formData.value.difficulty,
-      level: formData.value.level,
+      difficulty_level: formData.value.difficulty_level,
       source_year: formData.value.source_year
     }
 
@@ -312,18 +305,8 @@ onMounted(async () => {
           <el-option v-for="t in topics" :key="t.id" :label="t.title" :value="t.id" />
         </el-select>
         <el-select
-          v-model="difficultyFilter"
-          clearable
-          placeholder="按难度筛选"
-          @change="handleFilter"
-          style="width: 150px"
-        >
-          <el-option label="L1-L2" value="L1-L2" />
-          <el-option label="L2-L3" value="L2-L3" />
-          <el-option label="L3-L4" value="L3-L4" />
-        </el-select>
         <el-select
-          v-model="levelFilter"
+          v-model="difficultyLevelFilter"
           clearable
           placeholder="按级别筛选"
           @change="handleFilter"
@@ -368,15 +351,9 @@ onMounted(async () => {
             <el-tag type="success">{{ row.answer }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="difficulty" label="难度" width="100">
+        <el-table-column prop="difficulty_level" label="难度级别" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.difficulty">{{ row.difficulty }}</el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="level" label="级别" width="80">
-          <template #default="{ row }">
-            <el-tag v-if="row.level" type="info">L{{ row.level }}</el-tag>
+            <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -407,7 +384,7 @@ onMounted(async () => {
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑题目' : '新增题目'" width="900px" top="3vh">
       <el-form :model="formData" label-width="100px">
         <el-form-item label="题目级别" required>
-          <el-select v-model="formData.level" placeholder="选择级别" style="width: 100%">
+          <el-select v-model="formData.difficulty_level" placeholder="选择级别" style="width: 100%">
             <el-option label="级别 1" :value="1" />
             <el-option label="级别 2" :value="2" />
             <el-option label="级别 3" :value="3" />
@@ -471,13 +448,6 @@ onMounted(async () => {
           <RichEditor v-model="formData.explanation_html" placeholder="请输入答案解析" height="120px" />
         </el-form-item>
 
-        <el-form-item label="难度等级">
-          <el-select v-model="formData.difficulty" clearable placeholder="选择难度">
-            <el-option label="L1-L2" value="L1-L2" />
-            <el-option label="L2-L3" value="L2-L3" />
-            <el-option label="L3-L4" value="L3-L4" />
-          </el-select>
-        </el-form-item>
 
         <el-form-item label="真题年份">
           <el-input-number v-model="formData.source_year" :min="2000" :max="2030" placeholder="真题年份" :controls="false" style="width: 150px" />
