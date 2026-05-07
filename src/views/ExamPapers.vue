@@ -10,7 +10,7 @@ const examPapers = ref<ExamPaper[]>([])
 const loading = ref(false)
 const page = ref(1)
 const size = ref(20)
-const levelFilter = ref<string | undefined>(undefined)
+const levelFilter = ref<number | undefined>(undefined)
 const paperTypeFilter = ref<string | undefined>(undefined)
 
 const showDialog = ref(false)
@@ -18,14 +18,14 @@ const isEdit = ref(false)
 const submitting = ref(false)
 const formData = ref<ExamPaperCreate>({
   title: '',
-  level: 'A',
+  difficulty_level: 1,
   total_questions: 10,
   description: '',
   paper_type: 'daily'
 })
 const editId = ref<number | null>(null)
 
-const levelOptions = ['A', 'B', 'C', 'D', 'E', 'F']
+const levelOptions = [1, 2, 3, 4, 5, 6]
 const paperTypeOptions = [
   { value: 'daily', label: '每日一练' },
   { value: 'mock', label: '模拟卷' },
@@ -38,7 +38,7 @@ const loadExamPapers = async () => {
     const params = {
       page: page.value,
       size: size.value,
-      level: levelFilter.value,
+      difficulty_level: levelFilter.value,
       paper_type: paperTypeFilter.value
     }
     examPapers.value = await examPaperApi.list(params)
@@ -64,7 +64,7 @@ const openCreate = () => {
   isEdit.value = false
   formData.value = {
     title: '',
-    level: 'A',
+    difficulty_level: 1,
     total_questions: 10,
     description: '',
     paper_type: 'daily'
@@ -77,7 +77,7 @@ const openEdit = (paper: ExamPaper) => {
   editId.value = paper.id
   formData.value = {
     title: paper.title,
-    level: paper.level,
+    difficulty_level: paper.difficulty_level,
     total_questions: paper.total_questions,
     description: paper.description || '',
     paper_type: paper.paper_type
@@ -90,7 +90,7 @@ const handleSubmit = async () => {
     ElMessage.warning('请输入考卷标题')
     return
   }
-  if (!formData.value.level) {
+  if (!formData.value.difficulty_level) {
     ElMessage.warning('请选择考卷等级')
     return
   }
@@ -161,9 +161,9 @@ onMounted(loadExamPapers)
       <el-table :data="examPapers" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="120" />
         <el-table-column prop="title" label="标题" min-width="200" />
-        <el-table-column prop="level" label="等级" width="100">
+        <el-table-column prop="difficulty_level" label="等级" width="100">
           <template #default="{ row }">
-            <el-tag type="primary">Level {{ row.level }}</el-tag>
+            <el-tag type="primary">Level {{ row.difficulty_level }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="paper_type" label="类型" width="120">
@@ -208,7 +208,7 @@ onMounted(loadExamPapers)
           <el-input v-model="formData.title" placeholder="如：袋鼠数学Level A 10题训练卷" />
         </el-form-item>
         <el-form-item label="等级" required>
-          <el-select v-model="formData.level" placeholder="选择等级">
+          <el-select v-model="formData.difficulty_level" placeholder="选择等级">
             <el-option v-for="l in levelOptions" :key="l" :label="`Level ${l}`" :value="l" />
           </el-select>
         </el-form-item>

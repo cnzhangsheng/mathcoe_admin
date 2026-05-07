@@ -63,8 +63,8 @@ const loadQuestionList = async () => {
   try {
     const params = {
       page: questionPage.value,
-      size: 20,
-      level: questionLevelFilter.value,
+      size: 50,
+      difficulty_level: questionLevelFilter.value,
       topic_id: questionTopicFilter.value
     }
     questionList.value = await questionApi.list(params)
@@ -160,7 +160,7 @@ onMounted(async () => {
       <div class="paper-info" v-if="examPaper">
         <el-descriptions :column="4" border>
           <el-descriptions-item label="等级">
-            <el-tag type="primary">Level {{ examPaper.level }}</el-tag>
+            <el-tag type="primary">Level {{ examPaper.difficulty_level }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="类型">
             <el-tag :type="examPaper.paper_type === 'daily' ? 'success' : examPaper.paper_type === 'mock' ? 'warning' : 'info'">
@@ -198,7 +198,7 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="级别" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.question?.level" type="info">L{{ row.question.level }}</el-tag>
+            <el-tag v-if="row.question?.difficulty_level" type="info">L{{ row.question.difficulty_level }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -216,20 +216,6 @@ onMounted(async () => {
     <el-dialog v-model="showQuestionDialog" title="选择题目" width="800px">
       <div class="question-filter-bar">
         <el-select
-          v-model="questionLevelFilter"
-          clearable
-          placeholder="按级别筛选"
-          @change="handleQuestionFilter"
-          style="width: 120px"
-        >
-          <el-option label="级别 1" :value="1" />
-          <el-option label="级别 2" :value="2" />
-          <el-option label="级别 3" :value="3" />
-          <el-option label="级别 4" :value="4" />
-          <el-option label="级别 5" :value="5" />
-          <el-option label="级别 6" :value="6" />
-        </el-select>
-        <el-select
           v-model="questionTopicFilter"
           clearable
           placeholder="按专题筛选"
@@ -238,14 +224,28 @@ onMounted(async () => {
         >
           <el-option v-for="t in topics" :key="t.id" :label="t.title" :value="t.id" />
         </el-select>
+        <el-select
+          v-model="questionLevelFilter"
+          clearable
+          placeholder="按难度级别筛选"
+          @change="handleQuestionFilter"
+          style="width: 180px"
+        >
+          <el-option label="难度级别 Level 1" :value="1" />
+          <el-option label="难度级别 Level 2" :value="2" />
+          <el-option label="难度级别 Level 3" :value="3" />
+          <el-option label="难度级别 Level 4" :value="4" />
+          <el-option label="难度级别 Level 5" :value="5" />
+          <el-option label="难度级别 Level 6" :value="6" />
+        </el-select>
       </div>
 
       <el-table :data="questionList" v-loading="questionLoading" stripe height="400">
         <el-table-column prop="id" label="ID" width="120" />
         <el-table-column prop="title" label="题目" min-width="200" />
-        <el-table-column prop="level" label="级别" width="80">
+        <el-table-column label="级别" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.level" type="info">L{{ row.level }}</el-tag>
+            <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -271,7 +271,7 @@ onMounted(async () => {
 
       <el-pagination
         :current-page="questionPage"
-        :page-size="20"
+        :page-size="50"
         layout="prev, pager, next"
         @current-change="handleQuestionPageChange"
         style="margin-top: 15px"

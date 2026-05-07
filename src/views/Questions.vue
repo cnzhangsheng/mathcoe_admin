@@ -305,19 +305,18 @@ onMounted(async () => {
           <el-option v-for="t in topics" :key="t.id" :label="t.title" :value="t.id" />
         </el-select>
         <el-select
-        <el-select
           v-model="difficultyLevelFilter"
           clearable
-          placeholder="按级别筛选"
+          placeholder="按难度级别筛选"
           @change="handleFilter"
-          style="width: 120px"
+          style="width: 160px"
         >
-          <el-option label="级别 1" :value="1" />
-          <el-option label="级别 2" :value="2" />
-          <el-option label="级别 3" :value="3" />
-          <el-option label="级别 4" :value="4" />
-          <el-option label="级别 5" :value="5" />
-          <el-option label="级别 6" :value="6" />
+          <el-option label="难度级别 Level 1" :value="1" />
+          <el-option label="难度级别 Level 2" :value="2" />
+          <el-option label="难度级别 Level 3" :value="3" />
+          <el-option label="难度级别 Level 4" :value="4" />
+          <el-option label="难度级别 Level 5" :value="5" />
+          <el-option label="难度级别 Level 6" :value="6" />
         </el-select>
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button

@@ -3,7 +3,7 @@ import request from './request'
 export interface ExamPaper {
   id: number
   title: string
-  level: string
+  difficulty_level: number
   total_questions: number
   description: string | null
   paper_type: string
@@ -13,7 +13,7 @@ export interface ExamPaper {
 
 export interface ExamPaperCreate {
   title: string
-  level: string
+  difficulty_level: number
   total_questions?: number
   description?: string
   paper_type?: string
@@ -21,7 +21,7 @@ export interface ExamPaperCreate {
 
 export interface ExamPaperUpdate {
   title?: string
-  level?: string
+  difficulty_level?: number
   total_questions?: number
   description?: string
   paper_type?: string
@@ -47,14 +47,14 @@ export interface ExamPaperQuestionCreate {
 export interface QuestionBasic {
   id: number
   title: string
-  level: number | null
+  difficulty_level: number | null
   question_type: string
 }
 
 export interface ExamPaperListParams {
   page?: number
   size?: number
-  level?: string
+  difficulty_level?: number
   paper_type?: string
 }
 
