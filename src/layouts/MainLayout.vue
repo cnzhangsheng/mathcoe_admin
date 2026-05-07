@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { House, User, Document, Collection, Setting, SwitchButton, Notebook } from '@element-plus/icons-vue'
+import { House, User, Document, Collection, Setting, SwitchButton, Notebook, DataAnalysis } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -48,6 +48,10 @@ const handleSelect = (index: string) => {
         <el-menu-item index="/questions">
           <el-icon><Document /></el-icon>
           <span>题目管理</span>
+        </el-menu-item>
+        <el-menu-item index="/reports">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>运营报表</span>
         </el-menu-item>
       </el-menu>
     </aside>

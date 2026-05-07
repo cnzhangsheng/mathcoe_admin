@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { examPaperApi, type ExamPaper, type ExamPaperCreate } from '@/api/examPaper'
-import { ElMessage } from 'element-plus'
-import { Plus, Edit, Delete, View } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Edit, Delete, View, Download } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const examPapers = ref<ExamPaper[]>([])
@@ -129,6 +129,38 @@ const goToDetail = (paper: ExamPaper) => {
   router.push(`/exam-papers/${paper.id}`)
 }
 
+const handleExportPdf = async (paper: ExamPaper) => {
+  try {
+    const blob = await examPaperApi.exportPdf(paper.id) as Blob
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${paper.title}.pdf`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('PDF 生成成功')
+    loadExamPapers()
+  } catch (e) {
+    console.error('exportPdf error:', e)
+    ElMessage.error('PDF 生成失败')
+  }
+}
+
+const handleDownloadPdf = async (paper: ExamPaper) => {
+  try {
+    const blob = await examPaperApi.downloadPdf(paper.id) as Blob
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${paper.title}.pdf`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('downloadPdf error:', e)
+    ElMessage.error('下载失败')
+  }
+}
+
 onMounted(loadExamPapers)
 </script>
 
@@ -183,11 +215,13 @@ onMounted(loadExamPapers)
             <span>{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="340" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link :icon="View" @click="goToDetail(row)">管理题目</el-button>
             <el-button type="primary" link :icon="Edit" @click="openEdit(row)">编辑</el-button>
             <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+            <el-button type="success" link :icon="Download" @click="handleExportPdf(row)">生成PDF</el-button>
+            <el-button v-if="row.file_path" type="warning" link :icon="Download" @click="handleDownloadPdf(row)">下载PDF</el-button>
           </template>
         </el-table-column>
       </el-table>

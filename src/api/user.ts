@@ -6,6 +6,9 @@ export interface User {
   nickname: string | null
   avatar_url: string | null
   streak_days: number
+  grade: string
+  difficulty_level: number
+  daily_goal: number
   last_active_date: string | null
   last_login_at: string | null
   created_at: string
@@ -16,6 +19,9 @@ export interface UserListParams {
   page?: number
   size?: number
   keyword?: string
+  grade?: string
+  difficulty_level?: number
+  daily_goal?: number
 }
 
 export const userApi = {

@@ -7,6 +7,7 @@ export interface ExamPaper {
   total_questions: number
   description: string | null
   paper_type: string
+  file_path: string | null
   created_at: string | null
   updated_at: string | null
 }
@@ -69,5 +70,9 @@ export const examPaperApi = {
   listQuestions: (examPaperId: number) => request.get<ExamPaperQuestion[]>(`/admin/exam-papers/${examPaperId}/questions`),
   addQuestion: (examPaperId: number, data: ExamPaperQuestionCreate) => request.post<ExamPaperQuestion>(`/admin/exam-papers/${examPaperId}/questions`, data),
   removeQuestion: (examPaperId: number, questionId: number) => request.delete(`/admin/exam-papers/${examPaperId}/questions/${questionId}`),
-  updateSort: (examPaperId: number, sorts: { id: number; sort: number }[]) => request.post(`/admin/exam-papers/${examPaperId}/questions/sort`, sorts)
+  updateSort: (examPaperId: number, sorts: { id: number; sort: number }[]) => request.post(`/admin/exam-papers/${examPaperId}/questions/sort`, sorts),
+
+  // PDF 导出
+  exportPdf: (id: number) => request.post<Blob>(`/admin/exam-papers/${id}/export-pdf`, {}, { responseType: 'blob', timeout: 120000 }),
+  downloadPdf: (id: number) => request.get<Blob>(`/admin/exam-papers/${id}/download-pdf`, { responseType: 'blob', timeout: 120000 }),
 }

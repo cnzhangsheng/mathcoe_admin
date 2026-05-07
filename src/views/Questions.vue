@@ -337,7 +337,12 @@ onMounted(async () => {
             <span>{{ topics.find(t => t.id === row.topic_id)?.title || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="题目" min-width="200" />
+        <el-table-column prop="title" label="题目标题" min-width="200" />
+        <el-table-column label="题目内容" min-width="300">
+          <template #default="{ row }">
+            <span class="content-preview">{{ row.content?.text ? row.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="question_type" label="类型" width="80">
           <template #default="{ row }">
             <el-tag :type="row.question_type === 'single' ? 'primary' : 'warning'">
@@ -354,11 +359,6 @@ onMounted(async () => {
           <template #default="{ row }">
             <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
             <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="source_year" label="年份" width="80">
-          <template #default="{ row }">
-            <span>{{ row.source_year || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -486,5 +486,16 @@ onMounted(async () => {
   padding: 10px;
   background: #f5f7fa;
   border-radius: 4px;
+}
+
+.content-preview {
+  color: #666;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.5;
 }
 </style>

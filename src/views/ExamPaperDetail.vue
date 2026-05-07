@@ -28,6 +28,20 @@ const paperTypeLabel = computed(() => {
   return types[examPaper.value?.paper_type || 'daily'] || '未知'
 })
 
+const topicStats = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const q of questions.value) {
+    const topicId = q.question?.topic_id
+    if (topicId) {
+      counts[topicId] = (counts[topicId] || 0) + 1
+    }
+  }
+  return Object.entries(counts).map(([topicId, count]) => {
+    const topic = topics.value.find(t => t.id === Number(topicId))
+    return { topicName: topic?.title || topicId, count }
+  })
+})
+
 const loadExamPaper = async () => {
   loading.value = true
   try {
@@ -174,6 +188,13 @@ onMounted(async () => {
             {{ examPaper.description || '-' }}
           </el-descriptions-item>
         </el-descriptions>
+
+        <div class="topic-stats" v-if="topicStats.length > 0">
+          <span class="stats-label">主题统计：</span>
+          <el-tag v-for="s in topicStats" :key="s.topicName" class="topic-tag">
+            {{ s.topicName }} <strong>{{ s.count }}</strong>题
+          </el-tag>
+        </div>
       </div>
 
       <div class="action-bar">
@@ -191,12 +212,22 @@ onMounted(async () => {
             <span>{{ row.question_id }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="题目内容" min-width="200">
+        <el-table-column label="主题" width="120">
+          <template #default="{ row }">
+            <span>{{ topics.find(t => t.id === row.question?.topic_id)?.title || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="题目标题" min-width="200">
           <template #default="{ row }">
             <span>{{ row.question?.title || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="级别" width="80">
+        <el-table-column label="题目内容" min-width="300">
+          <template #default="{ row }">
+            <span class="content-preview">{{ row.question?.content?.text ? row.question.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="难度级别" width="80">
           <template #default="{ row }">
             <el-tag v-if="row.question?.difficulty_level" type="info">L{{ row.question.difficulty_level }}</el-tag>
             <span v-else>-</span>
@@ -213,7 +244,7 @@ onMounted(async () => {
     </el-card>
 
     <!-- 添加题目弹窗 -->
-    <el-dialog v-model="showQuestionDialog" title="选择题目" width="800px">
+    <el-dialog v-model="showQuestionDialog" title="选择题目" width="1000px" top="5vh">
       <div class="question-filter-bar">
         <el-select
           v-model="questionTopicFilter"
@@ -240,10 +271,20 @@ onMounted(async () => {
         </el-select>
       </div>
 
-      <el-table :data="questionList" v-loading="questionLoading" stripe height="400">
+      <el-table :data="questionList" v-loading="questionLoading" stripe height="500">
         <el-table-column prop="id" label="ID" width="120" />
-        <el-table-column prop="title" label="题目" min-width="200" />
-        <el-table-column label="级别" width="80">
+        <el-table-column label="主题" width="120">
+          <template #default="{ row }">
+            <span>{{ topics.find(t => t.id === row.topic_id)?.title || row.topic_id || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="title" label="题目标题" min-width="200" />
+        <el-table-column label="题目内容" min-width="300">
+          <template #default="{ row }">
+            <span class="content-preview">{{ row.content?.text ? row.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="难度级别" width="80">
           <template #default="{ row }">
             <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
             <span v-else>-</span>
@@ -295,6 +336,29 @@ onMounted(async () => {
 
 .paper-info {
   margin-bottom: 20px;
+}
+
+.topic-stats {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stats-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #606266;
+}
+
+.topic-tag {
+  font-size: 13px;
+}
+
+.topic-tag strong {
+  font-size: 15px;
+  margin: 0 2px;
 }
 
 .action-bar {
