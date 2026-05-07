@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem } from '@/api/report'
+import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem, type ExamPaperStatsReport } from '@/api/report'
 import { ElMessage } from 'element-plus'
 
 const activeTab = ref('question-type')
@@ -50,6 +50,24 @@ const handleTabClick = (tab: { paneName: string }) => {
     loadQuestionTypeReport()
   } else if (tab.paneName === 'topic-preference' && topicItems.value.length === 0) {
     loadTopicPreferenceReport()
+  } else if (tab.paneName === 'exam-paper' && !examPaperStats.value) {
+    loadExamPaperStatsReport()
+  }
+}
+
+// === 考卷用户统计报表 ===
+const examPaperStats = ref<ExamPaperStatsReport | null>(null)
+const epLoading = ref(false)
+
+const loadExamPaperStatsReport = async () => {
+  epLoading.value = true
+  try {
+    examPaperStats.value = await reportApi.getExamPaperStatsReport()
+  } catch (e) {
+    console.error('loadExamPaperStatsReport error:', e)
+    ElMessage.error('加载考卷统计报表失败')
+  } finally {
+    epLoading.value = false
   }
 }
 
@@ -155,6 +173,78 @@ onMounted(() => {
           </el-card>
         </div>
       </el-tab-pane>
+
+      <!-- 考卷用户统计报表 -->
+      <el-tab-pane label="考卷用户统计报表" name="exam-paper">
+        <div v-loading="epLoading">
+          <!-- 概览卡片 -->
+          <div class="stats-cards" v-if="examPaperStats">
+            <el-card class="stat-card">
+              <div class="stat-value">{{ examPaperStats.total_tests }}</div>
+              <div class="stat-label">总测试次数</div>
+            </el-card>
+            <el-card class="stat-card">
+              <div class="stat-value">{{ examPaperStats.completed_tests }}</div>
+              <div class="stat-label">已完成次数</div>
+            </el-card>
+            <el-card class="stat-card">
+              <div class="stat-value">{{ examPaperStats.total_users }}</div>
+              <div class="stat-label">参与用户数</div>
+            </el-card>
+            <el-card class="stat-card">
+              <div class="stat-value">{{ examPaperStats.avg_score }}</div>
+              <div class="stat-label">平均得分</div>
+            </el-card>
+          </div>
+
+          <!-- 按类型统计 -->
+          <el-card v-if="examPaperStats?.type_stats.length" style="margin-bottom: 20px">
+            <template #header><span class="card-title">各类型考卷统计</span></template>
+            <el-table :data="examPaperStats.type_stats" stripe>
+              <el-table-column label="类型" width="120">
+                <template #default="{ row }">
+                  <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'mock' ? 'warning' : 'info'">{{ row.type_label }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="测试次数" width="100" prop="test_count" />
+              <el-table-column label="完成次数" width="100" prop="completed_count" />
+              <el-table-column label="完成率" width="100">
+                <template #default="{ row }"><span>{{ row.completion_rate }}%</span></template>
+              </el-table-column>
+              <el-table-column label="平均分" width="100">
+                <template #default="{ row }"><span>{{ row.avg_score }}</span></template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+
+          <!-- 热门考卷 TOP10 -->
+          <div class="top-grid" v-if="examPaperStats?.top_papers.length">
+            <el-card>
+              <template #header><span class="card-title">🔥 热门考卷 TOP 10</span></template>
+              <div v-for="(item, index) in examPaperStats.top_papers" :key="item.id" class="top-item">
+                <span class="top-rank">{{ index + 1 }}</span>
+                <span class="top-name">{{ item.title }}</span>
+                <div class="top-meta">
+                  <el-tag size="small" :type="item.paper_type === 'daily' ? 'success' : item.paper_type === 'mock' ? 'warning' : 'info'">{{ item.type_label }}</el-tag>
+                  <span class="meta-text">{{ item.test_count }} 次</span>
+                  <span class="meta-text">均分 {{ item.avg_score }}</span>
+                </div>
+              </div>
+            </el-card>
+
+            <el-card>
+              <template #header><span class="card-title">📊 得分分布</span></template>
+              <div v-for="d in examPaperStats.score_distribution" :key="d.range" class="dist-item">
+                <span class="dist-label">{{ d.range }} 分</span>
+                <el-progress :percentage="Math.round(d.count / Math.max(...examPaperStats.score_distribution.map(x => x.count)) * 100)" :stroke-width="18" />
+                <span class="dist-count">{{ d.count }} 次</span>
+              </div>
+            </el-card>
+          </div>
+
+          <div v-if="!examPaperStats && !epLoading" class="empty-tip">暂无数据</div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -237,5 +327,65 @@ onMounted(() => {
 .top-name {
   flex: 1;
   font-size: 14px;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #409eff;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.top-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.meta-text {
+  color: #909399;
+}
+
+.dist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.dist-label {
+  width: 60px;
+  font-size: 13px;
+  color: #606266;
+  flex-shrink: 0;
+}
+
+.dist-item .el-progress {
+  flex: 1;
+}
+
+.dist-count {
+  width: 50px;
+  text-align: right;
+  font-size: 13px;
+  color: #909399;
+  flex-shrink: 0;
 }
 </style>
