@@ -247,7 +247,7 @@ onMounted(loadExamPapers)
           </el-select>
         </el-form-item>
         <el-form-item label="题目数量">
-          <el-input-number v-model="formData.total_questions" :min="1" :max="20" />
+          <el-input-number v-model="formData.total_questions" :min="1" :max="50" />
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="formData.paper_type" placeholder="选择类型">
