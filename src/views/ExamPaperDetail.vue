@@ -217,14 +217,9 @@ onMounted(async () => {
             <span>{{ topics.find(t => t.id === row.question?.topic_id)?.title || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="题目标题" min-width="200">
+        <el-table-column label="题目内容" min-width="400">
           <template #default="{ row }">
-            <span>{{ row.question?.title || '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="题目内容" min-width="300">
-          <template #default="{ row }">
-            <span class="content-preview">{{ row.question?.content?.text ? row.question.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+            <span class="content-text">{{ row.question?.content?.text ? row.question.content.text.replace(/<img[^>]*>/gi, '').replace(/<[^>]+>/g, '').trim() : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="难度级别" width="80">
@@ -278,10 +273,9 @@ onMounted(async () => {
             <span>{{ topics.find(t => t.id === row.topic_id)?.title || row.topic_id || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="题目标题" min-width="200" />
-        <el-table-column label="题目内容" min-width="300">
+        <el-table-column label="题目内容" min-width="400">
           <template #default="{ row }">
-            <span class="content-preview">{{ row.content?.text ? row.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+            <span class="content-text">{{ row.content?.text ? row.content.text.replace(/<img[^>]*>/gi, '').replace(/<[^>]+>/g, '').trim() : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="难度级别" width="80">
@@ -369,5 +363,13 @@ onMounted(async () => {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+}
+
+.content-text {
+  color: #333;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
