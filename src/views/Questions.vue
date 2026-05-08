@@ -337,10 +337,9 @@ onMounted(async () => {
             <span>{{ topics.find(t => t.id === row.topic_id)?.title || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="题目标题" min-width="200" />
-        <el-table-column label="题目内容" min-width="300">
+        <el-table-column label="题目内容" min-width="400">
           <template #default="{ row }">
-            <span class="content-preview">{{ row.content?.text ? row.content.text.replace(/<[^>]+>/g, '').substring(0, 120) : '-' }}</span>
+            <span class="content-text">{{ row.content?.text ? row.content.text.replace(/<img[^>]*>/gi, '').replace(/<[^>]+>/g, '').trim() : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="question_type" label="类型" width="80">
@@ -488,14 +487,11 @@ onMounted(async () => {
   border-radius: 4px;
 }
 
-.content-preview {
-  color: #666;
+.content-text {
+  color: #333;
   font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.5;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
