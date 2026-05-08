@@ -29,7 +29,8 @@ const levelOptions = [1, 2, 3, 4, 5, 6]
 const paperTypeOptions = [
   { value: 'daily', label: '每日一练' },
   { value: 'mock', label: '模拟卷' },
-  { value: 'topic', label: '专项训练' }
+  { value: 'topic', label: '专项训练' },
+  { value: 'past', label: '真题卷' }
 ]
 
 const loadExamPapers = async () => {
@@ -200,7 +201,7 @@ onMounted(loadExamPapers)
         </el-table-column>
         <el-table-column prop="paper_type" label="类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'mock' ? 'warning' : 'info'">
+            <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'mock' ? 'warning' : row.paper_type === 'past' ? 'danger' : 'info'">
               {{ paperTypeOptions.find(t => t.value === row.paper_type)?.label || row.paper_type }}
             </el-tag>
           </template>
