@@ -17,10 +17,13 @@ const emit = defineEmits<{
 const editorRef = shallowRef<IDomEditor>()
 const valueHtml = ref(props.modelValue || '<p><br></p>')
 
+const showSource = ref(false)
+const sourceCode = ref('')
+
 watch(
   () => props.modelValue,
   (val) => {
-    if (val !== valueHtml.value) {
+    if (val !== valueHtml.value && !showSource.value) {
       valueHtml.value = val || '<p><br></p>'
     }
   }
@@ -65,6 +68,20 @@ const handleChange = (editor: IDomEditor) => {
   emit('update:modelValue', html)
 }
 
+const toggleSource = () => {
+  if (!showSource.value) {
+    // Switch to source mode — copy current HTML
+    sourceCode.value = valueHtml.value
+    showSource.value = true
+  } else {
+    // Switch back — apply edited source to editor
+    showSource.value = false
+    const newHtml = sourceCode.value || '<p><br></p>'
+    valueHtml.value = newHtml
+    emit('update:modelValue', newHtml)
+  }
+}
+
 onBeforeUnmount(() => {
   const editor = editorRef.value
   if (editor) {
@@ -75,13 +92,24 @@ onBeforeUnmount(() => {
 
 <template>
   <div style="border: 1px solid #ccc; width: 100%">
-    <Toolbar
-      :editor="editorRef"
-      :defaultConfig="toolbarConfig"
-      mode="simple"
-      style="border-bottom: 1px solid #ccc"
-    />
+    <div style="border-bottom: 1px solid #ccc; display: flex; align-items: center;">
+      <Toolbar
+        :editor="editorRef"
+        :defaultConfig="toolbarConfig"
+        mode="simple"
+        style="flex: 1; border-bottom: none;"
+      />
+      <el-button
+        size="small"
+        :type="showSource ? 'primary' : 'default'"
+        @click="toggleSource"
+        style="margin: 4px 6px; flex-shrink: 0;"
+      >
+        源码
+      </el-button>
+    </div>
     <Editor
+      v-show="!showSource"
       v-model="valueHtml"
       :defaultConfig="editorConfig"
       :style="{ height: height || '200px', overflowY: 'hidden' }"
@@ -89,5 +117,11 @@ onBeforeUnmount(() => {
       @onCreated="handleCreated"
       @onChange="handleChange"
     />
+    <textarea
+      v-show="showSource"
+      v-model="sourceCode"
+      :style="{ height: height || '200px', width: '100%', border: 'none', padding: '8px', fontFamily: 'monospace', fontSize: '13px', resize: 'vertical', outline: 'none' }"
+      placeholder="HTML 源码"
+    ></textarea>
   </div>
 </template>
