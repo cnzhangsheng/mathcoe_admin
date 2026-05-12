@@ -130,7 +130,10 @@ const goToDetail = (paper: ExamPaper) => {
   router.push(`/exam-papers/${paper.id}`)
 }
 
+const pdfLoadingId = ref<number | null>(null)
+
 const handleExportPdf = async (paper: ExamPaper) => {
+  pdfLoadingId.value = paper.id
   try {
     const blob = await examPaperApi.exportPdf(paper.id) as Blob
     const url = window.URL.createObjectURL(blob)
@@ -144,6 +147,8 @@ const handleExportPdf = async (paper: ExamPaper) => {
   } catch (e) {
     console.error('exportPdf error:', e)
     ElMessage.error('PDF 生成失败')
+  } finally {
+    pdfLoadingId.value = null
   }
 }
 
@@ -221,7 +226,7 @@ onMounted(loadExamPapers)
             <el-button type="primary" link :icon="View" @click="goToDetail(row)">管理题目</el-button>
             <el-button type="primary" link :icon="Edit" @click="openEdit(row)">编辑</el-button>
             <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
-            <el-button type="success" link :icon="Download" @click="handleExportPdf(row)">生成PDF</el-button>
+            <el-button type="success" link :icon="Download" :loading="pdfLoadingId === row.id" @click="handleExportPdf(row)">生成PDF</el-button>
             <el-button v-if="row.file_path" type="warning" link :icon="Download" @click="handleDownloadPdf(row)">下载PDF</el-button>
           </template>
         </el-table-column>
