@@ -41,7 +41,8 @@ const formData = ref<{
     { label: 'A', html: '' },
     { label: 'B', html: '' },
     { label: 'C', html: '' },
-    { label: 'D', html: '' }
+    { label: 'D', html: '' },
+    { label: 'E', html: '' }
   ],
   answer: '',
   answerMultiple: [],
@@ -127,7 +128,8 @@ const openCreate = () => {
       { label: 'A', html: '' },
       { label: 'B', html: '' },
       { label: 'C', html: '' },
-      { label: 'D', html: '' }
+      { label: 'D', html: '' },
+      { label: 'E', html: '' }
     ],
     answer: '',
     answerMultiple: [],
