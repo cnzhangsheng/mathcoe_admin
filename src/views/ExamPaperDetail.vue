@@ -22,6 +22,7 @@ const questionLoading = ref(false)
 const questionPage = ref(1)
 const questionLevelFilter = ref<number | undefined>(undefined)
 const questionTopicFilter = ref<number | undefined>(undefined)
+const questionYearFilter = ref<number | undefined>(undefined)
 
 const paperTypeLabel = computed(() => {
   const types: Record<string, string> = { daily: '每日一练', mock: '模拟卷', topic: '专项训练', past: '真题卷' }
@@ -75,11 +76,12 @@ const openAddQuestion = async () => {
 const loadQuestionList = async () => {
   questionLoading.value = true
   try {
-    const params = {
+    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number } = {
       page: questionPage.value,
       size: 50,
       difficulty_level: questionLevelFilter.value,
-      topic_id: questionTopicFilter.value
+      topic_id: questionTopicFilter.value,
+      source_year: questionYearFilter.value
     }
     questionList.value = await questionApi.list(params)
   } catch (e) {
@@ -264,6 +266,15 @@ onMounted(async () => {
           <el-option label="难度级别 Level 5" :value="5" />
           <el-option label="难度级别 Level 6" :value="6" />
         </el-select>
+        <el-input-number
+          v-model="questionYearFilter"
+          :min="2000"
+          :max="2030"
+          :controls="false"
+          placeholder="输入年份"
+          @change="handleQuestionFilter"
+          style="width: 140px"
+        />
       </div>
 
       <el-table :data="questionList" v-loading="questionLoading" stripe height="500">
