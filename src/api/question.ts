@@ -47,6 +47,7 @@ export interface QuestionListParams {
   size?: number
   topic_id?: number
   difficulty_level?: number  // 级别 1-6
+  source_year?: number
 }
 
 export const questionApi = {

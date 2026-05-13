@@ -13,6 +13,7 @@ const page = ref(1)
 const size = ref(20)
 const topicFilter = ref<number | undefined>(undefined)
 const difficultyLevelFilter = ref<number | undefined>(undefined)
+const yearFilter = ref<number | undefined>(undefined)
 const total = ref(0)
 
 const selectedQuestions = ref<Question[]>([])
@@ -72,12 +73,13 @@ const loadQuestions = async () => {
   loading.value = true
   selectedQuestions.value = []
   try {
-    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number } = {
+    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number } = {
       page: page.value,
       size: size.value
     }
     if (topicFilter.value) params.topic_id = topicFilter.value
     if (difficultyLevelFilter.value) params.difficulty_level = difficultyLevelFilter.value
+    if (yearFilter.value) params.source_year = yearFilter.value
     questions.value = await questionApi.list(params)
     const countResult = await questionApi.getCount(topicFilter.value)
     total.value = countResult?.total || 0
@@ -265,6 +267,34 @@ const handleDelete = async (question: Question) => {
   }
 }
 
+const editingCell = ref<Record<string, boolean>>({})
+
+const startEdit = (id: number, field: string) => {
+  editingCell.value[`${id}-${field}`] = true
+}
+
+const stopEdit = (id: number, field: string) => {
+  editingCell.value[`${id}-${field}`] = false
+}
+
+const saveField = async (question: Question, field: string, value: any) => {
+  try {
+    await questionApi.update(question.id, { [field]: value } as QuestionUpdate)
+    ;(question as any)[field] = value
+    ElMessage.success('更新成功')
+  } catch (e) {
+    console.error('saveField error:', e)
+    ElMessage.error('更新失败')
+  } finally {
+    stopEdit(question.id, field)
+  }
+}
+
+const getOptionLabels = (question: Question): string[] => {
+  if (!question.options) return ['A', 'B', 'C', 'D', 'E']
+  return question.options.map(o => o.label)
+}
+
 const handleBatchDelete = async () => {
   if (selectedQuestions.value.length === 0) {
     ElMessage.warning('请先选择要删除的题目')
@@ -320,6 +350,15 @@ onMounted(async () => {
           <el-option label="难度级别 Level 5" :value="5" />
           <el-option label="难度级别 Level 6" :value="6" />
         </el-select>
+        <el-input-number
+          v-model="yearFilter"
+          :min="2000"
+          :max="2030"
+          :controls="false"
+          placeholder="输入年份"
+          @change="handleFilter"
+          style="width: 140px"
+        />
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button
           type="danger"
@@ -334,9 +373,22 @@ onMounted(async () => {
       <el-table :data="questions" v-loading="loading" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="id" label="ID" width="120" />
-        <el-table-column prop="topic_id" label="专题" width="120">
+        <el-table-column prop="topic_id" label="专题" width="140">
           <template #default="{ row }">
-            <span>{{ topics.find(t => t.id === row.topic_id)?.title || '-' }}</span>
+            <div v-if="!editingCell[`${row.id}-topic`]" @click="startEdit(row.id, 'topic')" style="cursor: pointer; min-height: 24px;">
+              <span>{{ topics.find(t => t.id === row.topic_id)?.title || '-' }}</span>
+            </div>
+            <el-select
+              v-else
+              :model-value="row.topic_id"
+              @change="(val: number) => saveField(row, 'topic_id', val)"
+              @visible-change="(visible: boolean) => { if (!visible) stopEdit(row.id, 'topic') }"
+              size="small"
+              style="width: 130px;"
+              autofocus
+            >
+              <el-option v-for="t in topics" :key="t.id" :label="t.title" :value="t.id" />
+            </el-select>
           </template>
         </el-table-column>
         <el-table-column label="题目内容" min-width="400">
@@ -351,15 +403,60 @@ onMounted(async () => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="answer" label="答案" width="80">
+        <el-table-column prop="answer" label="答案" width="120">
           <template #default="{ row }">
-            <el-tag type="success">{{ row.answer }}</el-tag>
+            <div v-if="!editingCell[`${row.id}-answer`]" @click="startEdit(row.id, 'answer')" style="cursor: pointer; min-height: 24px;">
+              <el-tag type="success">{{ row.answer || '-' }}</el-tag>
+            </div>
+            <el-select
+              v-else
+              :model-value="row.answer"
+              @change="(val: string) => saveField(row, 'answer', val)"
+              @visible-change="(visible: boolean) => { if (!visible) stopEdit(row.id, 'answer') }"
+              size="small"
+              style="width: 100px;"
+              autofocus
+            >
+              <el-option v-for="label in getOptionLabels(row)" :key="label" :label="label" :value="label" />
+            </el-select>
           </template>
         </el-table-column>
-        <el-table-column prop="difficulty_level" label="难度级别" width="80">
+        <el-table-column label="难度" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
-            <span v-else>-</span>
+            <div v-if="!editingCell[`${row.id}-difficulty`]" @click="startEdit(row.id, 'difficulty')" style="cursor: pointer; min-height: 24px;">
+              <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
+              <span v-else>-</span>
+            </div>
+            <el-select
+              v-else
+              :model-value="row.difficulty_level"
+              @change="(val: number) => saveField(row, 'difficulty_level', val)"
+              @visible-change="(visible: boolean) => { if (!visible) stopEdit(row.id, 'difficulty') }"
+              size="small"
+              style="width: 80px;"
+              autofocus
+            >
+              <el-option v-for="l in [1,2,3,4,5,6]" :key="l" :label="`L${l}`" :value="l" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="年份" width="100">
+          <template #default="{ row }">
+            <div v-if="!editingCell[`${row.id}-year`]" @click="startEdit(row.id, 'year')" style="cursor: pointer; min-height: 24px;">
+              <span>{{ row.source_year || '-' }}</span>
+            </div>
+            <el-input-number
+              v-else
+              :model-value="row.source_year"
+              :min="2000"
+              :max="2030"
+              size="small"
+              :controls="false"
+              style="width: 90px;"
+              @change="(val: number | undefined) => saveField(row, 'source_year', val || null)"
+              @blur="() => stopEdit(row.id, 'year')"
+              autofocus
+            />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
