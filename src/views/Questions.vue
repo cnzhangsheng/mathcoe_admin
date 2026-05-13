@@ -372,6 +372,11 @@ onMounted(async () => {
 
       <el-table :data="questions" v-loading="loading" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
+        <el-table-column label="序号" width="70">
+          <template #default="{ $index }">
+            <span>{{ (page - 1) * size + $index + 1 }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="id" label="ID" width="120" />
         <el-table-column prop="topic_id" label="专题" width="140">
           <template #default="{ row }">
