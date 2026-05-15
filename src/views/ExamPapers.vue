@@ -27,7 +27,7 @@ const editId = ref<number | null>(null)
 
 const levelOptions = [1, 2, 3, 4, 5, 6]
 const paperTypeOptions = [
-  { value: 'daily', label: '每日一练' },
+  { value: 'daily', label: '日常练习' },
   { value: 'mock', label: '模拟卷' },
   { value: 'topic', label: '专项训练' },
   { value: 'past', label: '真题卷' }
