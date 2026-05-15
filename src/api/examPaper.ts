@@ -7,6 +7,7 @@ export interface ExamPaper {
   total_questions: number
   description: string | null
   paper_type: string
+  status: string
   file_path: string | null
   created_at: string | null
   updated_at: string | null
@@ -26,6 +27,7 @@ export interface ExamPaperUpdate {
   total_questions?: number
   description?: string
   paper_type?: string
+  status?: string
 }
 
 export interface ExamPaperWithQuestions extends ExamPaper {

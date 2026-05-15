@@ -167,6 +167,17 @@ const handleDownloadPdf = async (paper: ExamPaper) => {
   }
 }
 
+const handleToggleStatus = async (row: ExamPaper, newStatus: string) => {
+  try {
+    await examPaperApi.update(row.id, { status: newStatus })
+    ElMessage.success(newStatus === 'published' ? '已上架' : '已下架')
+    loadExamPapers()
+  } catch (e) {
+    console.error('handleToggleStatus error:', e)
+    ElMessage.error('操作失败')
+  }
+}
+
 onMounted(loadExamPapers)
 </script>
 
@@ -211,6 +222,13 @@ onMounted(loadExamPapers)
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'published' ? 'success' : 'info'">
+              {{ row.status === 'published' ? '上架' : '下架' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="total_questions" label="题目数" width="80">
           <template #default="{ row }">
             <span>{{ row.total_questions }}题</span>
@@ -221,13 +239,15 @@ onMounted(loadExamPapers)
             <span>{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="340" fixed="right">
+        <el-table-column label="操作" width="460" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link :icon="View" @click="goToDetail(row)">管理题目</el-button>
             <el-button type="primary" link :icon="Edit" @click="openEdit(row)">编辑</el-button>
             <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
             <el-button type="success" link :icon="Download" :loading="pdfLoadingId === row.id" @click="handleExportPdf(row)">生成PDF</el-button>
             <el-button v-if="row.file_path" type="warning" link :icon="Download" @click="handleDownloadPdf(row)">下载PDF</el-button>
+            <el-button v-if="row.status === 'published'" type="warning" size="small" @click="handleToggleStatus(row, 'unpublished')">下架</el-button>
+            <el-button v-else type="success" size="small" @click="handleToggleStatus(row, 'published')">上架</el-button>
           </template>
         </el-table-column>
       </el-table>
