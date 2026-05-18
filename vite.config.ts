@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         timeout: 300000
+      },
+      '/content': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
       }
     }
   }

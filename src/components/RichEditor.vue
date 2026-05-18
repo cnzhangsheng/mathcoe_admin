@@ -8,6 +8,7 @@ const props = defineProps<{
   modelValue: string
   placeholder?: string
   height?: string
+  uploadFolder?: string
 }>()
 
 const emit = defineEmits<{
@@ -33,7 +34,7 @@ const editorConfig: Partial<IEditorConfig> = {
   placeholder: props.placeholder || '请输入内容...',
   MENU_CONF: {
     uploadImage: {
-      server: '/api/v1/upload/image',
+      server: props.uploadFolder ? `/api/v1/upload/image?folder=${props.uploadFolder}` : '/api/v1/upload/image',
       fieldName: 'file',
       maxFileSize: 5 * 1024 * 1024,
       onSuccess(file: File, res: any) {
