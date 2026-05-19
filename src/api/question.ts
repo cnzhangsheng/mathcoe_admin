@@ -12,6 +12,7 @@ export interface Question {
   difficulty_level: number | null  // 级别 1-6
   source_year: number | null
   tags: string[] | null
+  status: string  // published | unpublished
   created_at: string | null
   updated_at: string | null
 }
@@ -48,6 +49,7 @@ export interface QuestionListParams {
   topic_id?: number
   difficulty_level?: number  // 级别 1-6
   source_year?: number
+  status?: string  // published | unpublished
 }
 
 export const questionApi = {
@@ -56,5 +58,7 @@ export const questionApi = {
   update: (id: number, data: QuestionUpdate) => request.put<Question>(`/admin/questions/${id}`, data),
   delete: (id: number) => request.delete(`/admin/questions/${id}`),
   batchDelete: (ids: number[]) => request.post<{ message: string; deleted_count: number }>('/admin/questions/batch-delete', ids),
-  getCount: (topicId?: number) => request.get<{ total: number }>('/admin/stats/questions', { params: { topic_id: topicId } })
+  getCount: (topicId?: number) => request.get<{ total: number }>('/admin/stats/questions', { params: { topic_id: topicId } }),
+  publish: (id: number) => request.post(`/admin/questions/${id}/publish`),
+  unpublish: (id: number) => request.post(`/admin/questions/${id}/unpublish`)
 }

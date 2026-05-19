@@ -76,12 +76,13 @@ const openAddQuestion = async () => {
 const loadQuestionList = async () => {
   questionLoading.value = true
   try {
-    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number } = {
+    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number; status?: string } = {
       page: questionPage.value,
       size: 50,
       difficulty_level: questionLevelFilter.value,
       topic_id: questionTopicFilter.value,
-      source_year: questionYearFilter.value
+      source_year: questionYearFilter.value,
+      status: 'published'
     }
     questionList.value = await questionApi.list(params)
   } catch (e) {

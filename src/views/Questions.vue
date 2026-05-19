@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { questionApi, type Question, type QuestionCreate } from '@/api/question'
 import { topicApi, type Topic } from '@/api/topic'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue'
 import RichEditor from '@/components/RichEditor.vue'
 
 const questions = ref<Question[]>([])
@@ -14,6 +14,7 @@ const size = ref(30)
 const topicFilter = ref<number | undefined>(undefined)
 const difficultyLevelFilter = ref<number | undefined>(undefined)
 const yearFilter = ref<number | undefined>(undefined)
+const statusFilter = ref<string | undefined>(undefined)
 const total = ref(0)
 
 const selectedQuestions = ref<Question[]>([])
@@ -73,13 +74,14 @@ const loadQuestions = async () => {
   loading.value = true
   selectedQuestions.value = []
   try {
-    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number } = {
+    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number; status?: string } = {
       page: page.value,
       size: size.value
     }
     if (topicFilter.value) params.topic_id = topicFilter.value
     if (difficultyLevelFilter.value) params.difficulty_level = difficultyLevelFilter.value
     if (yearFilter.value) params.source_year = yearFilter.value
+    if (statusFilter.value) params.status = statusFilter.value
     questions.value = await questionApi.list(params)
     const countResult = await questionApi.getCount(topicFilter.value)
     total.value = countResult?.total || 0
@@ -267,6 +269,28 @@ const handleDelete = async (question: Question) => {
   }
 }
 
+const handlePublish = async (question: Question) => {
+  try {
+    await questionApi.publish(question.id)
+    ElMessage.success('上架成功')
+    loadQuestions()
+  } catch (e) {
+    console.error('handlePublish error:', e)
+    ElMessage.error('上架失败')
+  }
+}
+
+const handleUnpublish = async (question: Question) => {
+  try {
+    await ElMessageBox.confirm('确定要下架这道题目吗？下架后用户将不可见。', '提示', { type: 'warning' })
+    await questionApi.unpublish(question.id)
+    ElMessage.success('下架成功')
+    loadQuestions()
+  } catch {
+    // 用户取消
+  }
+}
+
 const editingCell = ref<Record<string, boolean>>({})
 
 const startEdit = (id: number, field: string) => {
@@ -359,6 +383,16 @@ onMounted(async () => {
           @change="handleFilter"
           style="width: 140px"
         />
+        <el-select
+          v-model="statusFilter"
+          clearable
+          placeholder="按状态筛选"
+          @change="handleFilter"
+          style="width: 140px"
+        >
+          <el-option label="已发布" value="published" />
+          <el-option label="未发布" value="unpublished" />
+        </el-select>
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button
           type="danger"
@@ -464,10 +498,35 @@ onMounted(async () => {
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'published' ? 'success' : 'info'">
+              {{ row.status === 'published' ? '已发布' : '未发布' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link :icon="Edit" @click="openEdit(row)">编辑</el-button>
             <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+            <el-button
+              v-if="row.status === 'published'"
+              type="warning"
+              link
+              :icon="Download"
+              @click="handleUnpublish(row)"
+            >
+              下架
+            </el-button>
+            <el-button
+              v-else
+              type="success"
+              link
+              :icon="Upload"
+              @click="handlePublish(row)"
+            >
+              上架
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
