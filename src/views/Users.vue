@@ -11,15 +11,22 @@ const size = ref(20)
 const keyword = ref('')
 const gradeFilter = ref<string | undefined>(undefined)
 const levelFilter = ref<number | undefined>(undefined)
-const goalFilter = ref<number | undefined>(undefined)
+const tierFilter = ref<string | undefined>(undefined)
 const total = ref(0)
 
 const gradeOptions = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6']
 const levelOptions = [1, 2, 3, 4, 5, 6]
-const goalOptions = [5, 10, 15, 20, 30]
+const tierOptions = [
+  { label: '免费用户', value: 'free' },
+  { label: 'Pro 用户', value: 'pro' },
+]
 
 const showDetail = ref(false)
 const currentUser = ref<User | null>(null)
+
+const showTierDialog = ref(false)
+const editingUser = ref<User | null>(null)
+const tierForm = ref({ user_tier: 'free', tier_expires_at: '' })
 
 const loadUsers = async () => {
   loading.value = true
@@ -27,7 +34,7 @@ const loadUsers = async () => {
     const params: UserListParams = { page: page.value, size: size.value, keyword: keyword.value }
     if (gradeFilter.value) params.grade = gradeFilter.value
     if (levelFilter.value) params.difficulty_level = levelFilter.value
-    if (goalFilter.value) params.daily_goal = goalFilter.value
+    if (tierFilter.value) params.user_tier = tierFilter.value
     users.value = await userApi.list(params)
     const countResult = await userApi.getCount()
     total.value = countResult.total
@@ -60,6 +67,31 @@ const viewDetail = async (user: User) => {
   }
 }
 
+const editTier = (user: User) => {
+  editingUser.value = user
+  tierForm.value = {
+    user_tier: user.user_tier,
+    tier_expires_at: user.tier_expires_at || '',
+  }
+  showTierDialog.value = true
+}
+
+const saveTier = async () => {
+  if (!editingUser.value) return
+  try {
+    const data = {
+      user_tier: tierForm.value.user_tier,
+      tier_expires_at: tierForm.value.user_tier === 'free' ? null : (tierForm.value.tier_expires_at || null),
+    }
+    await userApi.updateTier(editingUser.value.id, data)
+    ElMessage.success('用户等级更新成功')
+    showTierDialog.value = false
+    loadUsers()
+  } catch {
+    ElMessage.error('更新失败')
+  }
+}
+
 onMounted(loadUsers)
 </script>
 
@@ -82,13 +114,31 @@ onMounted(loadUsers)
         <el-select v-model="levelFilter" clearable placeholder="难度" @change="handleFilterChange" style="width: 100px">
           <el-option v-for="l in levelOptions" :key="l" :label="`Level ${l}`" :value="l" />
         </el-select>
-        <el-select v-model="goalFilter" clearable placeholder="每日目标" @change="handleFilterChange" style="width: 130px">
-          <el-option v-for="g in goalOptions" :key="g" :label="`${g} 题`" :value="g" />
+        <el-select v-model="tierFilter" clearable placeholder="用户等级" @change="handleFilterChange" style="width: 120px">
+          <el-option v-for="t in tierOptions" :key="t.value" :label="t.label" :value="t.value" />
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
       </div>
       <el-table :data="users" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="100" />
+        <el-table-column prop="openid" label="OpenID" width="200">
+          <template #default="{ row }">
+            <span style="font-size: 12px; font-family: monospace">{{ row.openid?.substring(0, 16) }}...</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="user_tier" label="用户等级" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.user_tier === 'pro'" type="success" size="small">Pro</el-tag>
+            <el-tag v-else type="info" size="small">免费</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="tier_expires_at" label="Pro 到期" width="165">
+          <template #default="{ row }">
+            <span v-if="row.tier_expires_at" style="font-size: 12px">{{ row.tier_expires_at?.split('.')[0] || row.tier_expires_at }}</span>
+            <span v-else-if="row.user_tier === 'pro'" style="color: #999">永久</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="nickname" label="昵称" width="130">
           <template #default="{ row }">
             <span>{{ row.nickname || '未设置' }}</span>
@@ -129,9 +179,10 @@ onMounted(loadUsers)
             <span>{{ row.created_at?.split('.')[0] || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column label="操作" width="130" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="viewDetail(row)">详情</el-button>
+            <el-button type="warning" link @click="editTier(row)">等级</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -148,8 +199,13 @@ onMounted(loadUsers)
     <el-dialog v-model="showDetail" title="用户详情" width="500px">
       <el-descriptions :column="1" border v-if="currentUser">
         <el-descriptions-item label="ID">{{ currentUser.id }}</el-descriptions-item>
-        <el-descriptions-item label="昵称">{{ currentUser.nickname || '未设置' }}</el-descriptions-item>
         <el-descriptions-item label="OpenID">{{ currentUser.openid }}</el-descriptions-item>
+        <el-descriptions-item label="昵称">{{ currentUser.nickname || '未设置' }}</el-descriptions-item>
+        <el-descriptions-item label="用户等级">
+          <el-tag v-if="currentUser.user_tier === 'pro'" type="success" size="small">Pro</el-tag>
+          <el-tag v-else type="info" size="small">免费</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="Pro 到期">{{ currentUser.tier_expires_at || (currentUser.user_tier === 'pro' ? '永久' : '-') }}</el-descriptions-item>
         <el-descriptions-item label="年级">{{ currentUser.grade }}</el-descriptions-item>
         <el-descriptions-item label="难度级别">Level {{ currentUser.difficulty_level }}</el-descriptions-item>
         <el-descriptions-item label="每日目标">{{ currentUser.daily_goal }} 题</el-descriptions-item>
@@ -158,6 +214,36 @@ onMounted(loadUsers)
         <el-descriptions-item label="最后登录">{{ currentUser.last_login_at || '-' }}</el-descriptions-item>
         <el-descriptions-item label="注册时间">{{ currentUser.created_at }}</el-descriptions-item>
       </el-descriptions>
+    </el-dialog>
+
+    <el-dialog v-model="showTierDialog" title="设置用户等级" width="400px">
+      <el-form :model="tierForm" label-width="100px" v-if="editingUser">
+        <el-form-item label="用户">
+          <span>{{ editingUser.nickname || '未设置' }}（ID: {{ editingUser.id }}）</span>
+        </el-form-item>
+        <el-form-item label="用户等级">
+          <el-select v-model="tierForm.user_tier" style="width: 100%">
+            <el-option label="免费用户" value="free" />
+            <el-option label="Pro 用户" value="pro" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Pro 到期">
+          <el-date-picker
+            v-model="tierForm.tier_expires_at"
+            type="datetime"
+            placeholder="选择到期时间（空=永久）"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            clearable
+            style="width: 100%"
+            :disabled="tierForm.user_tier !== 'pro'"
+          />
+          <div style="font-size: 12px; color: #999; margin-top: 4px">留空表示永久有效，仅在 Pro 等级时可设置</div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showTierDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveTier">保存</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
