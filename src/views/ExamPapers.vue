@@ -28,11 +28,11 @@ const editId = ref<number | null>(null)
 
 const levelOptions = [1, 2, 3, 4, 5, 6]
 const paperTypeOptions = [
-  { value: 'daily', label: '日常练习' },
+  { value: 'daily', label: '练习卷' },
   { value: 'mock', label: '模拟卷' },
-  { value: 'topic', label: '专项训练' },
+  { value: 'topic', label: '专题卷' },
   { value: 'past', label: '真题卷' },
-  { value: 'custom', label: '用户卷' }
+  { value: 'custom', label: '自编卷' }
 ]
 
 const loadExamPapers = async () => {

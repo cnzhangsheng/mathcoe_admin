@@ -28,7 +28,7 @@ const questionTopicFilter = ref<number | undefined>(undefined)
 const questionYearFilter = ref<number | undefined>(undefined)
 
 const paperTypeLabel = computed(() => {
-  const types: Record<string, string> = { daily: '日常练习', mock: '模拟卷', topic: '专项训练', past: '真题卷' }
+  const types: Record<string, string> = { daily: '练习卷', mock: '模拟卷', topic: '专题卷', past: '真题卷' }
   return types[examPaper.value?.paper_type || 'daily'] || '未知'
 })
 
