@@ -4,8 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { examPaperApi, type ExamPaperWithQuestions, type ExamPaperQuestion } from '@/api/examPaper'
 import { questionApi, type Question } from '@/api/question'
 import { topicApi, type Topic } from '@/api/topic'
-import { ElMessage } from 'element-plus'
-import { Plus, Delete, ArrowUp, ArrowDown, Back } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Delete, ArrowUp, ArrowDown, Back, Refresh, Remove } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +15,9 @@ const examPaper = ref<ExamPaperWithQuestions | null>(null)
 const questions = ref<ExamPaperQuestion[]>([])
 const topics = ref<Topic[]>([])
 const loading = ref(false)
+const randomLoading = ref(false)
+const showTopicDialog = ref(false)
+const selectedTopicIds = ref<number[]>([])
 
 const showQuestionDialog = ref(false)
 const questionList = ref<Question[]>([])
@@ -118,6 +121,61 @@ const addQuestion = async (questionId: number) => {
   }
 }
 
+const addRandomQuestions = async () => {
+  const ep = examPaper.value
+  if (!ep) return
+
+  const remaining = ep.total_questions - questions.value.length
+  if (remaining <= 0) {
+    ElMessage.warning('考卷题目已满')
+    return
+  }
+
+  selectedTopicIds.value = []
+  showTopicDialog.value = true
+}
+
+const confirmAddRandom = async () => {
+  const ep = examPaper.value
+  if (!ep) return
+
+  randomLoading.value = true
+  try {
+    const res = await examPaperApi.addRandomQuestions(examPaperId, selectedTopicIds.value.length > 0 ? { topic_ids: selectedTopicIds.value } : undefined)
+    const count = (res as any)?.added_count ?? (ep.total_questions - questions.value.length)
+    ElMessage.success(`已添加 ${count} 道题目`)
+    showTopicDialog.value = false
+    await loadExamPaper()
+  } catch (e: any) {
+    console.error('addRandomQuestions error:', e)
+    ElMessage.error(e?.response?.data?.detail || '一键添加失败')
+  } finally {
+    randomLoading.value = false
+  }
+}
+
+const clearQuestions = async () => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('考卷暂无题目')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确定要清空考卷所有题目吗？此操作不可撤销。', '确认清空', {
+      confirmButtonText: '确定清空',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await examPaperApi.clearQuestions(examPaperId)
+    ElMessage.success('已清空所有题目')
+    await loadExamPaper()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      console.error('clearQuestions error:', e)
+      ElMessage.error('清空失败')
+    }
+  }
+}
+
 const removeQuestion = async (questionId: number) => {
   try {
     await examPaperApi.removeQuestion(examPaperId, questionId)
@@ -202,6 +260,8 @@ onMounted(async () => {
 
       <div class="action-bar">
         <el-button type="primary" :icon="Plus" @click="openAddQuestion">添加题目</el-button>
+        <el-button type="success" :icon="Refresh" :loading="randomLoading" @click="addRandomQuestions">一键添加题目</el-button>
+        <el-button type="danger" :icon="Remove" @click="clearQuestions">清空题目</el-button>
       </div>
 
       <el-table :data="questions" stripe>
@@ -323,6 +383,22 @@ onMounted(async () => {
         @current-change="handleQuestionPageChange"
         style="margin-top: 15px"
       />
+    </el-dialog>
+
+    <!-- 一键添加题目 - 专题选择弹窗 -->
+    <el-dialog v-model="showTopicDialog" title="选择专题" width="500px" top="30vh">
+      <p style="margin-bottom: 16px; color: #909399; font-size: 14px;">
+        按难度等级（Level {{ examPaper?.difficulty_level }}）从选中的专题中随机选题，补全剩余 {{ examPaper ? examPaper.total_questions - questions.length : 0 }} 题
+      </p>
+      <el-checkbox-group v-model="selectedTopicIds">
+        <el-checkbox v-for="t in topics" :key="t.id" :label="t.id" style="margin-bottom: 12px; display: flex;">
+          {{ t.title }}
+        </el-checkbox>
+      </el-checkbox-group>
+      <template #footer>
+        <el-button @click="showTopicDialog = false">取消</el-button>
+        <el-button type="success" :loading="randomLoading" @click="confirmAddRandom">开始添加</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>

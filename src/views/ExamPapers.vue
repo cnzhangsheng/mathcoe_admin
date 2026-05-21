@@ -10,6 +10,7 @@ const examPapers = ref<ExamPaper[]>([])
 const loading = ref(false)
 const page = ref(1)
 const size = ref(20)
+const titleFilter = ref('')
 const levelFilter = ref<number | undefined>(undefined)
 const paperTypeFilter = ref<string | undefined>(undefined)
 
@@ -30,7 +31,8 @@ const paperTypeOptions = [
   { value: 'daily', label: '日常练习' },
   { value: 'mock', label: '模拟卷' },
   { value: 'topic', label: '专项训练' },
-  { value: 'past', label: '真题卷' }
+  { value: 'past', label: '真题卷' },
+  { value: 'custom', label: '用户卷' }
 ]
 
 const loadExamPapers = async () => {
@@ -40,7 +42,8 @@ const loadExamPapers = async () => {
       page: page.value,
       size: size.value,
       difficulty_level: levelFilter.value,
-      paper_type: paperTypeFilter.value
+      paper_type: paperTypeFilter.value,
+      title: titleFilter.value || undefined
     }
     examPapers.value = await examPaperApi.list(params)
   } catch (e) {
@@ -186,6 +189,13 @@ onMounted(loadExamPapers)
     <h2>考卷管理</h2>
     <el-card>
       <div class="action-bar">
+        <el-input
+          v-model="titleFilter"
+          placeholder="按标题搜索"
+          clearable
+          @input="handleFilter"
+          style="width: 200px"
+        />
         <el-select
           v-model="levelFilter"
           clearable

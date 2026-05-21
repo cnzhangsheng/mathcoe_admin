@@ -71,6 +71,8 @@ export const examPaperApi = {
   // 考卷题目管理
   listQuestions: (examPaperId: number) => request.get<ExamPaperQuestion[]>(`/admin/exam-papers/${examPaperId}/questions`),
   addQuestion: (examPaperId: number, data: ExamPaperQuestionCreate) => request.post<ExamPaperQuestion>(`/admin/exam-papers/${examPaperId}/questions`, data),
+  addRandomQuestions: (examPaperId: number, data?: { topic_ids?: number[] }) => request.post<{ message: string; added_count: number }>(`/admin/exam-papers/${examPaperId}/questions/random`, data || {}),
+  clearQuestions: (examPaperId: number) => request.delete<{ message: string }>(`/admin/exam-papers/${examPaperId}/questions`),
   removeQuestion: (examPaperId: number, questionId: number) => request.delete(`/admin/exam-papers/${examPaperId}/questions/${questionId}`),
   updateSort: (examPaperId: number, sorts: { id: number; sort: number }[]) => request.post(`/admin/exam-papers/${examPaperId}/questions/sort`, sorts),
 
