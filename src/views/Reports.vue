@@ -27,7 +27,6 @@ const loadQuestionTypeReport = async () => {
 // === 知识点偏好报表 ===
 const topicItems = ref<TopicPreferenceItem[]>([])
 const topFavorites = ref<TopicPreferenceItem[]>([])
-const topLikes = ref<TopicPreferenceItem[]>([])
 const tpLoading = ref(false)
 
 const loadTopicPreferenceReport = async () => {
@@ -36,7 +35,6 @@ const loadTopicPreferenceReport = async () => {
     const data = await reportApi.getTopicPreferenceReport()
     topicItems.value = data.items
     topFavorites.value = data.top_favorites
-    topLikes.value = data.top_likes
   } catch (e) {
     console.error('loadTopicPreferenceReport error:', e)
     ElMessage.error('加载知识点报表失败')
@@ -103,12 +101,6 @@ onMounted(() => {
                 <el-progress :percentage="row.practice_ratio" :stroke-width="12" style="margin-top: 4px" />
               </template>
             </el-table-column>
-            <el-table-column label="点赞数" width="100" prop="like_count" />
-            <el-table-column label="点赞率" width="100">
-              <template #default="{ row }">
-                <span>{{ row.like_rate }}%</span>
-              </template>
-            </el-table-column>
             <el-table-column label="收藏数" width="100" prop="favorite_count" />
             <el-table-column label="收藏率" width="100">
               <template #default="{ row }">
@@ -134,7 +126,6 @@ onMounted(() => {
             <el-table-column label="知识点" min-width="160" prop="topic_title" />
             <el-table-column label="做题人次" width="120" prop="practice_count" />
             <el-table-column label="参与人数" width="100" prop="user_count" />
-            <el-table-column label="点赞数" width="100" prop="like_count" />
             <el-table-column label="收藏数" width="100" prop="favorite_count" />
           </el-table>
 
@@ -158,20 +149,7 @@ onMounted(() => {
             <div v-else class="empty-tip">暂无数据</div>
           </el-card>
 
-          <el-card>
-            <template #header>
-              <span class="card-title">👍 点赞 TOP 知识点</span>
-            </template>
-            <div v-if="topLikes.length > 0">
-              <div v-for="(item, index) in topLikes" :key="item.topic_id" class="top-item">
-                <span class="top-rank">{{ index + 1 }}</span>
-                <span class="top-name">{{ item.topic_title }}</span>
-                <el-tag type="success">{{ item.like_count }} 点赞</el-tag>
-              </div>
-            </div>
-            <div v-else class="empty-tip">暂无数据</div>
-          </el-card>
-        </div>
+          </div>
       </el-tab-pane>
 
       <!-- 考卷用户统计报表 -->

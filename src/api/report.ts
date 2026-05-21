@@ -5,8 +5,6 @@ export interface QuestionTypeReportItem {
   type_label: string
   practice_count: number
   practice_ratio: number
-  like_count: number
-  like_rate: number
   favorite_count: number
   favorite_rate: number
 }
@@ -21,14 +19,12 @@ export interface TopicPreferenceItem {
   topic_title: string
   practice_count: number
   user_count: number
-  like_count: number
   favorite_count: number
 }
 
 export interface TopicPreferenceReport {
   items: TopicPreferenceItem[]
   top_favorites: TopicPreferenceItem[]
-  top_likes: TopicPreferenceItem[]
 }
 
 export interface ExamPaperTypeStat {
