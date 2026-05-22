@@ -5,6 +5,7 @@ import { topicApi, type Topic } from '@/api/topic'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue'
 import RichEditor from '@/components/RichEditor.vue'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
 const questions = ref<Question[]>([])
 const topics = ref<Topic[]>([])
@@ -367,12 +368,7 @@ onMounted(async () => {
           @change="handleFilter"
           style="width: 160px"
         >
-          <el-option label="难度级别 Level 1" :value="1" />
-          <el-option label="难度级别 Level 2" :value="2" />
-          <el-option label="难度级别 Level 3" :value="3" />
-          <el-option label="难度级别 Level 4" :value="4" />
-          <el-option label="难度级别 Level 5" :value="5" />
-          <el-option label="难度级别 Level 6" :value="6" />
+          <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
         </el-select>
         <el-input-number
           v-model="yearFilter"
@@ -463,7 +459,7 @@ onMounted(async () => {
         <el-table-column label="难度" width="80">
           <template #default="{ row }">
             <div v-if="!editingCell[`${row.id}-difficulty`]" @click="startEdit(row.id, 'difficulty')" style="cursor: pointer; min-height: 24px;">
-              <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
+              <el-tag v-if="row.difficulty_level" type="info">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty_level)?.label || ('L' + row.difficulty_level) }}</el-tag>
               <span v-else>-</span>
             </div>
             <el-select
@@ -475,7 +471,7 @@ onMounted(async () => {
               style="width: 80px;"
               autofocus
             >
-              <el-option v-for="l in [1,2,3,4,5,6]" :key="l" :label="`L${l}`" :value="l" />
+              <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
             </el-select>
           </template>
         </el-table-column>
@@ -546,12 +542,7 @@ onMounted(async () => {
       <el-form :model="formData" label-width="100px">
         <el-form-item label="题目级别" required>
           <el-select v-model="formData.difficulty_level" placeholder="选择级别" style="width: 100%">
-            <el-option label="级别 1" :value="1" />
-            <el-option label="级别 2" :value="2" />
-            <el-option label="级别 3" :value="3" />
-            <el-option label="级别 4" :value="4" />
-            <el-option label="级别 5" :value="5" />
-            <el-option label="级别 6" :value="6" />
+            <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
           </el-select>
         </el-form-item>
 

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { userApi, type User, type UserListParams } from '@/api/user'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
 const users = ref<User[]>([])
 const loading = ref(false)
@@ -15,7 +16,7 @@ const tierFilter = ref<string | undefined>(undefined)
 const total = ref(0)
 
 const gradeOptions = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6']
-const levelOptions = [1, 2, 3, 4, 5, 6]
+const levelOptions = DIFFICULTY_LEVELS.map(l => l.value)
 const tierOptions = [
   { label: '免费用户', value: 'free' },
   { label: 'Pro 用户', value: 'pro' },
@@ -111,8 +112,8 @@ onMounted(loadUsers)
         <el-select v-model="gradeFilter" clearable placeholder="年级" @change="handleFilterChange" style="width: 100px">
           <el-option v-for="g in gradeOptions" :key="g" :label="g" :value="g" />
         </el-select>
-        <el-select v-model="levelFilter" clearable placeholder="难度" @change="handleFilterChange" style="width: 100px">
-          <el-option v-for="l in levelOptions" :key="l" :label="`Level ${l}`" :value="l" />
+        <el-select v-model="levelFilter" clearable placeholder="难度" @change="handleFilterChange" style="width: 160px">
+          <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
         </el-select>
         <el-select v-model="tierFilter" clearable placeholder="用户等级" @change="handleFilterChange" style="width: 120px">
           <el-option v-for="t in tierOptions" :key="t.value" :label="t.label" :value="t.value" />
@@ -151,7 +152,7 @@ onMounted(loadUsers)
         </el-table-column>
         <el-table-column prop="difficulty_level" label="难度级别" width="90">
           <template #default="{ row }">
-            <el-tag type="primary" size="small">Level {{ row.difficulty_level }}</el-tag>
+            <el-tag type="primary" size="small">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty_level)?.label || ('Level ' + row.difficulty_level) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="daily_goal" label="每日目标" width="80">
@@ -207,7 +208,7 @@ onMounted(loadUsers)
         </el-descriptions-item>
         <el-descriptions-item label="Pro 到期">{{ currentUser.tier_expires_at || (currentUser.user_tier === 'pro' ? '永久' : '-') }}</el-descriptions-item>
         <el-descriptions-item label="年级">{{ currentUser.grade }}</el-descriptions-item>
-        <el-descriptions-item label="难度级别">Level {{ currentUser.difficulty_level }}</el-descriptions-item>
+        <el-descriptions-item label="难度级别">{{ DIFFICULTY_LEVELS.find(l => l.value === currentUser.difficulty_level)?.label || ('Level ' + currentUser.difficulty_level) }}</el-descriptions-item>
         <el-descriptions-item label="每日目标">{{ currentUser.daily_goal }} 题</el-descriptions-item>
         <el-descriptions-item label="连续打卡">{{ currentUser.streak_days }} 天</el-descriptions-item>
         <el-descriptions-item label="最后活跃">{{ currentUser.last_active_date || '-' }}</el-descriptions-item>

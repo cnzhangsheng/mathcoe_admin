@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { examPaperApi, type ExamPaper, type ExamPaperCreate } from '@/api/examPaper'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, View, Download } from '@element-plus/icons-vue'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
 const router = useRouter()
 const examPapers = ref<ExamPaper[]>([])
@@ -26,7 +27,7 @@ const formData = ref<ExamPaperCreate>({
 })
 const editId = ref<number | null>(null)
 
-const levelOptions = [1, 2, 3, 4, 5, 6]
+const levelOptions = DIFFICULTY_LEVELS.map(l => l.value)
 const paperTypeOptions = [
   { value: 'daily', label: '练习卷' },
   { value: 'mock', label: '模拟卷' },
@@ -203,7 +204,7 @@ onMounted(loadExamPapers)
           @change="handleFilter"
           style="width: 120px"
         >
-          <el-option v-for="l in levelOptions" :key="l" :label="`Level ${l}`" :value="l" />
+          <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
         </el-select>
         <el-select
           v-model="paperTypeFilter"
@@ -222,7 +223,7 @@ onMounted(loadExamPapers)
         <el-table-column prop="title" label="标题" min-width="200" />
         <el-table-column prop="difficulty_level" label="等级" width="100">
           <template #default="{ row }">
-            <el-tag type="primary">Level {{ row.difficulty_level }}</el-tag>
+            <el-tag type="primary">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty_level)?.label || ('Level ' + row.difficulty_level) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="paper_type" label="类型" width="120">
@@ -279,7 +280,7 @@ onMounted(loadExamPapers)
         </el-form-item>
         <el-form-item label="等级" required>
           <el-select v-model="formData.difficulty_level" placeholder="选择等级">
-            <el-option v-for="l in levelOptions" :key="l" :label="`Level ${l}`" :value="l" />
+            <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="题目数量">

@@ -6,6 +6,7 @@ import { questionApi, type Question } from '@/api/question'
 import { topicApi, type Topic } from '@/api/topic'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, ArrowUp, ArrowDown, Back, Refresh, Remove } from '@element-plus/icons-vue'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
 const route = useRoute()
 const router = useRouter()
@@ -235,7 +236,7 @@ onMounted(async () => {
       <div class="paper-info" v-if="examPaper">
         <el-descriptions :column="4" border>
           <el-descriptions-item label="等级">
-            <el-tag type="primary">Level {{ examPaper.difficulty_level }}</el-tag>
+            <el-tag type="primary">{{ DIFFICULTY_LEVELS.find(l => l.value === examPaper.difficulty_level)?.label || ('Level ' + examPaper.difficulty_level) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="类型">
             <el-tag :type="examPaper.paper_type === 'daily' ? 'success' : examPaper.paper_type === 'mock' ? 'warning' : 'info'">
@@ -287,7 +288,7 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="难度级别" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.question?.difficulty_level" type="info">L{{ row.question.difficulty_level }}</el-tag>
+            <el-tag v-if="row.question?.difficulty_level" type="info">{{ DIFFICULTY_LEVELS.find(l => l.value === row.question.difficulty_level)?.label || ('L' + row.question.difficulty_level) }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -320,12 +321,7 @@ onMounted(async () => {
           @change="handleQuestionFilter"
           style="width: 180px"
         >
-          <el-option label="难度级别 Level 1" :value="1" />
-          <el-option label="难度级别 Level 2" :value="2" />
-          <el-option label="难度级别 Level 3" :value="3" />
-          <el-option label="难度级别 Level 4" :value="4" />
-          <el-option label="难度级别 Level 5" :value="5" />
-          <el-option label="难度级别 Level 6" :value="6" />
+          <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
         </el-select>
         <el-input-number
           v-model="questionYearFilter"
@@ -352,7 +348,7 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="难度级别" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.difficulty_level" type="info">L{{ row.difficulty_level }}</el-tag>
+            <el-tag v-if="row.difficulty_level" type="info">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty_level)?.label || ('L' + row.difficulty_level) }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -388,7 +384,7 @@ onMounted(async () => {
     <!-- 一键添加题目 - 专题选择弹窗 -->
     <el-dialog v-model="showTopicDialog" title="选择专题" width="500px" top="30vh">
       <p style="margin-bottom: 16px; color: #909399; font-size: 14px;">
-        按难度等级（Level {{ examPaper?.difficulty_level }}）从选中的专题中随机选题，补全剩余 {{ examPaper ? examPaper.total_questions - questions.length : 0 }} 题
+        按难度等级（{{ examPaper ? (DIFFICULTY_LEVELS.find(l => l.value === examPaper.difficulty_level)?.label || ('Level ' + examPaper.difficulty_level)) : '' }}）从选中的专题中随机选题，补全剩余 {{ examPaper ? examPaper.total_questions - questions.length : 0 }} 题
       </p>
       <el-checkbox-group v-model="selectedTopicIds">
         <el-checkbox v-for="t in topics" :key="t.id" :label="t.id" style="margin-bottom: 12px; display: flex;">
