@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { House, User, Document, Collection, Setting, SwitchButton, Notebook, DataAnalysis, Edit } from '@element-plus/icons-vue'
+import { House, User, Document, Collection, Setting, SwitchButton, Notebook, DataAnalysis, Edit, ChatDotSquare } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -65,6 +65,10 @@ const handleSelect = (index: string) => {
             <span>Banner 管理</span>
           </el-menu-item>
         </el-sub-menu>
+        <el-menu-item index="/feedbacks">
+          <el-icon><ChatDotSquare /></el-icon>
+          <span>意见反馈</span>
+        </el-menu-item>
       </el-menu>
     </aside>
     <div class="main-wrapper">
