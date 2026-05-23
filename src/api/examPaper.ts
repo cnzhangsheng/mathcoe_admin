@@ -8,6 +8,7 @@ export interface ExamPaper {
   description: string | null
   paper_type: string
   status: string
+  user_id: number | null
   file_path: string | null
   created_at: string | null
   updated_at: string | null

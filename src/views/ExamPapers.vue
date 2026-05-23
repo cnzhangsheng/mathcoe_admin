@@ -233,6 +233,11 @@ onMounted(loadExamPapers)
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="user_id" label="用户ID" width="100">
+          <template #default="{ row }">
+            <span>{{ row.user_id ?? '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : 'info'">
