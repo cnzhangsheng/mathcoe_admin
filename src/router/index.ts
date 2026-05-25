@@ -61,6 +61,11 @@ const routes = [
         path: 'feedbacks',
         name: 'Feedbacks',
         component: () => import('@/views/Feedbacks.vue')
+      },
+      {
+        path: 'system/data-backup',
+        name: 'DataBackup',
+        component: () => import('@/views/system/DataBackup.vue')
       }
     ]
   }
