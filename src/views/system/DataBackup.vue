@@ -54,12 +54,26 @@ const handleBackup = async () => {
   }
 }
 
-const handleDownload = (filename: string) => {
-  const url = `/api/v1/admin/backups/${encodeURIComponent(filename)}/download`
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
+const downloading = ref<string | null>(null)
+
+const handleDownload = async (filename: string) => {
+  downloading.value = filename
+  try {
+    const res = await request.get(`/admin/backups/${encodeURIComponent(filename)}/download`, {
+      responseType: 'blob'
+    } as any)
+    const blob = res instanceof Blob ? res : new Blob([res as any])
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.error('下载失败')
+  } finally {
+    downloading.value = null
+  }
 }
 
 const handleDelete = async (row: BackupGroup) => {
@@ -110,7 +124,13 @@ onMounted(fetchBackups)
         <el-table-column label="建表语句 (DDL)" min-width="240">
           <template #default="{ row }">
             <template v-if="row.ddl_file">
-              <el-button type="primary" link size="small" @click="handleDownload(row.ddl_file.filename)">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                :loading="downloading === row.ddl_file.filename"
+                @click="handleDownload(row.ddl_file.filename)"
+              >
                 {{ row.ddl_file.filename }}
               </el-button>
               <span class="file-size">{{ formatSize(row.ddl_file.size) }}</span>
@@ -121,7 +141,13 @@ onMounted(fetchBackups)
         <el-table-column label="数据 (DML)" min-width="240">
           <template #default="{ row }">
             <template v-if="row.data_file">
-              <el-button type="primary" link size="small" @click="handleDownload(row.data_file.filename)">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                :loading="downloading === row.data_file.filename"
+                @click="handleDownload(row.data_file.filename)"
+              >
                 {{ row.data_file.filename }}
               </el-button>
               <span class="file-size">{{ formatSize(row.data_file.size) }}</span>
