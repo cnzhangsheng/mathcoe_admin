@@ -60,5 +60,14 @@ export const questionApi = {
   batchDelete: (ids: number[]) => request.post<{ message: string; deleted_count: number }>('/admin/questions/batch-delete', ids),
   getCount: (topicId?: number) => request.get<{ total: number }>('/admin/stats/questions', { params: { topic_id: topicId } }),
   publish: (id: number) => request.post(`/admin/questions/${id}/publish`),
-  unpublish: (id: number) => request.post(`/admin/questions/${id}/unpublish`)
+  unpublish: (id: number) => request.post(`/admin/questions/${id}/unpublish`),
+  batchImport: (excel: File, zip?: File) => {
+    const formData = new FormData()
+    formData.append('excel', excel)
+    if (zip) formData.append('zip', zip)
+    return request.post<{ success: boolean; data: { total: number; imported: number; failed: number; errors: { row: number; message: string }[] } }>('/admin/questions/batch-import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  downloadTemplate: () => request.get('/admin/questions/batch-import-template', { responseType: 'blob' })
 }

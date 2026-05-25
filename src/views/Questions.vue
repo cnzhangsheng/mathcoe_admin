@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { questionApi, type Question, type QuestionCreate } from '@/api/question'
 import { topicApi, type Topic } from '@/api/topic'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Upload, Download, FolderOpened } from '@element-plus/icons-vue'
 import RichEditor from '@/components/RichEditor.vue'
 import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
@@ -294,6 +294,75 @@ const handleUnpublish = async (question: Question) => {
 
 const editingCell = ref<Record<string, boolean>>({})
 
+const showBatchDialog = ref(false)
+const batchExcel = ref<File | null>(null)
+const batchZip = ref<File | null>(null)
+const batchImporting = ref(false)
+const batchResult = ref<{ total: number; imported: number; failed: number; errors: { row: number; message: string }[] } | null>(null)
+
+const handleBatchExcelChange = (file: File) => {
+  batchExcel.value = file
+  return false  // prevent auto-upload
+}
+
+const handleBatchZipChange = (file: File) => {
+  batchZip.value = file
+  return false
+}
+
+const openBatchDialog = () => {
+  batchExcel.value = null
+  batchZip.value = null
+  batchResult.value = null
+  showBatchDialog.value = true
+}
+
+const downloadTemplate = async () => {
+  try {
+    const response = await questionApi.downloadTemplate()
+    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'batch_import_template.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('downloadTemplate error:', e)
+    ElMessage.error('模板下载失败')
+  }
+}
+
+const submitBatchImport = async () => {
+  if (!batchExcel.value) {
+    ElMessage.warning('请选择 Excel 文件')
+    return
+  }
+
+  batchImporting.value = true
+  batchResult.value = null
+  try {
+    const res = await questionApi.batchImport(batchExcel.value, batchZip.value || undefined)
+    batchResult.value = res.data
+    if (res.data.failed === 0) {
+      ElMessage.success(`成功导入 ${res.data.imported} 道题目`)
+    } else {
+      ElMessage.warning(`导入完成: ${res.data.imported} 成功, ${res.data.failed} 失败`)
+    }
+    loadQuestions()
+  } catch (e) {
+    console.error('batchImport error:', e)
+    ElMessage.error('批量导入失败')
+  } finally {
+    batchImporting.value = false
+  }
+}
+
+const removeBatchFile = (type: 'excel' | 'zip') => {
+  if (type === 'excel') batchExcel.value = null
+  else batchZip.value = null
+}
+
 const startEdit = (id: number, field: string) => {
   editingCell.value[`${id}-${field}`] = true
 }
@@ -390,6 +459,7 @@ onMounted(async () => {
           <el-option label="未发布" value="unpublished" />
         </el-select>
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
+        <el-button type="success" :icon="FolderOpened" @click="openBatchDialog">批量导入</el-button>
         <el-button
           type="danger"
           :icon="Delete"
@@ -537,6 +607,62 @@ onMounted(async () => {
       />
     </el-card>
 
+    <!-- 批量导入弹窗 -->
+    <el-dialog v-model="showBatchDialog" title="批量导入题目" width="600px" top="10vh">
+      <el-form label-width="100px">
+        <el-form-item label="Excel 文件" required>
+          <el-upload
+            :auto-upload="false"
+            :show-file-list="false"
+            :on-change="(u) => handleBatchExcelChange(u.raw as File)"
+            accept=".xlsx,.xls"
+          >
+            <el-button type="primary" v-if="!batchExcel">选择文件</el-button>
+            <el-tag v-else closable @close="removeBatchFile('excel')">
+              {{ batchExcel.name }}
+            </el-tag>
+          </el-upload>
+          <el-button type="text" @click="downloadTemplate" style="margin-left: 12px">下载模板</el-button>
+        </el-form-item>
+
+        <el-form-item label="图片包(ZIP)">
+          <el-upload
+            :auto-upload="false"
+            :show-file-list="false"
+            :on-change="(u) => handleBatchZipChange(u.raw as File)"
+            accept=".zip"
+          >
+            <el-button type="primary" v-if="!batchZip">选择文件</el-button>
+            <el-tag v-else closable @close="removeBatchFile('zip')">
+              {{ batchZip.name }}
+            </el-tag>
+          </el-upload>
+          <span class="el-form-item__tip">可选，图片命名规则：{题号}.png、{题号}{字母}.png</span>
+        </el-form-item>
+
+        <!-- 导入结果 -->
+        <el-form-item label="导入结果" v-if="batchResult">
+          <div class="batch-result">
+            <div class="result-summary">
+              <el-tag type="success">成功: {{ batchResult.imported }}</el-tag>
+              <el-tag type="danger" v-if="batchResult.failed > 0" style="margin-left: 10px">失败: {{ batchResult.failed }}</el-tag>
+            </div>
+            <el-table v-if="batchResult.errors.length > 0" :data="batchResult.errors" size="small" max-height="200" style="margin-top: 10px">
+              <el-table-column prop="row" label="行号" width="60" />
+              <el-table-column prop="message" label="错误信息" />
+            </el-table>
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showBatchDialog = false">关闭</el-button>
+        <el-button type="primary" :loading="batchImporting" :disabled="batchImporting || !batchExcel" @click="submitBatchImport">
+          开始导入
+        </el-button>
+      </template>
+    </el-dialog>
+
     <!-- 新增/编辑题目弹窗 -->
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑题目' : '新增题目'" width="900px" top="3vh">
       <el-form :model="formData" label-width="100px">
@@ -647,5 +773,14 @@ onMounted(async () => {
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.batch-result {
+  width: 100%;
+}
+
+.result-summary {
+  display: flex;
+  align-items: center;
 }
 </style>
