@@ -71,15 +71,11 @@ const handleChange = (editor: IDomEditor) => {
 
 const toggleSource = () => {
   if (!showSource.value) {
-    // Switch to source mode — copy current HTML
     sourceCode.value = valueHtml.value
     showSource.value = true
   } else {
-    // Switch back — apply edited source to editor
-    showSource.value = false
     const newHtml = sourceCode.value || '<p><br></p>'
-    // Wait for DOM to update (editor visible) before setting content,
-    // otherwise wangEditor skips setHtml when container is hidden
+    showSource.value = false
     nextTick(() => {
       valueHtml.value = newHtml
       emit('update:modelValue', newHtml)
@@ -113,20 +109,21 @@ onBeforeUnmount(() => {
         源码
       </el-button>
     </div>
-    <Editor
-      v-show="!showSource"
-      v-model="valueHtml"
-      :defaultConfig="editorConfig"
-      :style="{ height: height || '200px', overflowY: 'hidden' }"
-      mode="simple"
-      @onCreated="handleCreated"
-      @onChange="handleChange"
-    />
-    <textarea
-      v-show="showSource"
-      v-model="sourceCode"
-      :style="{ height: height || '200px', width: '100%', border: 'none', padding: '8px', fontFamily: 'monospace', fontSize: '13px', resize: 'vertical', outline: 'none' }"
-      placeholder="HTML 源码"
-    ></textarea>
+    <div style="position: relative;">
+      <Editor
+        v-model="valueHtml"
+        :defaultConfig="editorConfig"
+        :style="{ height: height || '200px', overflowY: 'hidden' }"
+        mode="simple"
+        @onCreated="handleCreated"
+        @onChange="handleChange"
+      />
+      <textarea
+        v-show="showSource"
+        v-model="sourceCode"
+        :style="{ position: 'absolute', top: 0, left: 0, height: height || '200px', width: '100%', border: 'none', padding: '8px', fontFamily: 'monospace', fontSize: '13px', resize: 'vertical', outline: 'none', zIndex: 10, background: '#fff' }"
+        placeholder="HTML 源码"
+      ></textarea>
+    </div>
   </div>
 </template>
