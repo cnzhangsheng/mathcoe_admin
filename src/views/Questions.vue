@@ -146,34 +146,39 @@ const openCreate = () => {
 }
 
 const openEdit = (question: Question) => {
-  isEdit.value = true
-  editId.value = question.id
+  try {
+    isEdit.value = true
+    editId.value = question.id
 
-  const contentHtml = question.content?.text || ''
-  const explanationHtml = question.explanation?.text || ''
-  const options = question.options || [
-    { label: 'A', text: '' },
-    { label: 'B', text: '' },
-    { label: 'C', text: '' },
-    { label: 'D', text: '' }
-  ]
+    const contentHtml = question.content?.text || ''
+    const explanationHtml = question.explanation?.text || ''
+    const options = question.options || [
+      { label: 'A', text: '' },
+      { label: 'B', text: '' },
+      { label: 'C', text: '' },
+      { label: 'D', text: '' }
+    ]
 
-  formData.value = {
-    title: question.title,
-    topic_id: question.topic_id,
-    question_type: question.question_type || 'single',
-    content_html: contentHtml,
-    options: options.map(opt => ({
-      label: opt.label,
-      html: opt.text || ''
-    })),
-    answer: question.question_type === 'multiple' ? '' : question.answer,
-    answerMultiple: question.question_type === 'multiple' ? question.answer.split(',') : [],
-    explanation_html: explanationHtml,
-    difficulty_level: question.difficulty_level,
-    source_year: question.source_year
+    formData.value = {
+      title: question.title,
+      topic_id: question.topic_id,
+      question_type: question.question_type || 'single',
+      content_html: contentHtml,
+      options: options.map(opt => ({
+        label: opt.label,
+        html: opt.text || ''
+      })),
+      answer: question.question_type === 'multiple' ? '' : (question.answer || ''),
+      answerMultiple: question.question_type === 'multiple' ? (question.answer || '').split(',') : [],
+      explanation_html: explanationHtml,
+      difficulty_level: question.difficulty_level,
+      source_year: question.source_year
+    }
+    showDialog.value = true
+  } catch (e) {
+    console.error('openEdit error:', e)
+    ElMessage.error('打开编辑对话框失败')
   }
-  showDialog.value = true
 }
 
 const handleSubmit = async () => {

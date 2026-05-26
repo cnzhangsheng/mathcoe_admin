@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css'
-import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import type { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 
@@ -78,8 +78,12 @@ const toggleSource = () => {
     // Switch back — apply edited source to editor
     showSource.value = false
     const newHtml = sourceCode.value || '<p><br></p>'
-    valueHtml.value = newHtml
-    emit('update:modelValue', newHtml)
+    // Wait for DOM to update (editor visible) before setting content,
+    // otherwise wangEditor skips setHtml when container is hidden
+    nextTick(() => {
+      valueHtml.value = newHtml
+      emit('update:modelValue', newHtml)
+    })
   }
 }
 
