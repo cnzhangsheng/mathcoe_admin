@@ -58,6 +58,11 @@ const routes = [
         component: () => import('@/views/Banners.vue')
       },
       {
+        path: 'images',
+        name: 'Images',
+        component: () => import('@/views/Images.vue')
+      },
+      {
         path: 'feedbacks',
         name: 'Feedbacks',
         component: () => import('@/views/Feedbacks.vue')

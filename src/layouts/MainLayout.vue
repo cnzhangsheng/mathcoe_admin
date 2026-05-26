@@ -64,6 +64,9 @@ const handleSelect = (index: string) => {
           <el-menu-item index="/banners">
             <span>Banner 管理</span>
           </el-menu-item>
+          <el-menu-item index="/images">
+            <span>图片管理</span>
+          </el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/feedbacks">
           <el-icon><ChatDotSquare /></el-icon>
