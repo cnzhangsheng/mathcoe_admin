@@ -24,8 +24,10 @@ const sourceCode = ref('')
 watch(
   () => props.modelValue,
   (val) => {
-    if (val !== valueHtml.value && !showSource.value) {
+    if (val !== valueHtml.value) {
       valueHtml.value = val || '<p><br></p>'
+      showSource.value = false
+      sourceCode.value = ''
     }
   }
 )

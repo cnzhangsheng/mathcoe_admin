@@ -61,6 +61,8 @@ export const questionApi = {
   getCount: (topicId?: number) => request.get<{ total: number }>('/admin/stats/questions', { params: { topic_id: topicId } }),
   publish: (id: number) => request.post(`/admin/questions/${id}/publish`),
   unpublish: (id: number) => request.post(`/admin/questions/${id}/unpublish`),
+  batchPublish: (ids: number[]) => request.post<{ message: string; updated_count: number }>('/admin/questions/batch-publish', ids),
+  batchUnpublish: (ids: number[]) => request.post<{ message: string; updated_count: number }>('/admin/questions/batch-unpublish', ids),
   batchImport: (excel: File, zip?: File) => {
     const formData = new FormData()
     formData.append('excel', excel)

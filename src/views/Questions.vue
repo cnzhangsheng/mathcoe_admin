@@ -415,6 +415,48 @@ const handleBatchDelete = async () => {
   }
 }
 
+const handleBatchPublish = async () => {
+  if (selectedQuestions.value.length === 0) {
+    ElMessage.warning('请先选择要上架的题目')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要上架选中的 ${selectedQuestions.value.length} 道题目吗？`,
+      '批量上架',
+      { type: 'info' }
+    )
+    const ids = selectedQuestions.value.map(q => q.id)
+    const result = await questionApi.batchPublish(ids)
+    ElMessage.success(result.message)
+    loadQuestions()
+  } catch {
+    // 用户取消
+  }
+}
+
+const handleBatchUnpublish = async () => {
+  if (selectedQuestions.value.length === 0) {
+    ElMessage.warning('请先选择要下架的题目')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要下架选中的 ${selectedQuestions.value.length} 道题目吗？`,
+      '批量下架',
+      { type: 'warning' }
+    )
+    const ids = selectedQuestions.value.map(q => q.id)
+    const result = await questionApi.batchUnpublish(ids)
+    ElMessage.success(result.message)
+    loadQuestions()
+  } catch {
+    // 用户取消
+  }
+}
+
 onMounted(async () => {
   await loadTopics()
   loadQuestions()
@@ -472,6 +514,20 @@ onMounted(async () => {
           :disabled="selectedQuestions.length === 0"
         >
           批量删除 ({{ selectedQuestions.length }})
+        </el-button>
+        <el-button
+          type="success"
+          @click="handleBatchPublish"
+          :disabled="selectedQuestions.length === 0"
+        >
+          批量上架
+        </el-button>
+        <el-button
+          type="warning"
+          @click="handleBatchUnpublish"
+          :disabled="selectedQuestions.length === 0"
+        >
+          批量下架
         </el-button>
       </div>
 
