@@ -121,12 +121,12 @@ const handleSubmit = async () => {
 
 const handleDelete = async (paper: ExamPaper) => {
   try {
+    await ElMessageBox.confirm('确定要删除这张考卷吗？', '提示', { type: 'warning' })
     await examPaperApi.delete(paper.id)
     ElMessage.success('删除成功')
     loadExamPapers()
-  } catch (e) {
-    console.error('handleDelete error:', e)
-    ElMessage.error('删除失败')
+  } catch {
+    // 用户取消
   }
 }
 
