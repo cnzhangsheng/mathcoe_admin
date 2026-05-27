@@ -84,7 +84,12 @@ const loadQuestions = async () => {
     if (yearFilter.value) params.source_year = yearFilter.value
     if (statusFilter.value) params.status = statusFilter.value
     questions.value = await questionApi.list(params)
-    const countResult = await questionApi.getCount(topicFilter.value)
+    const countResult = await questionApi.getCount({
+      topic_id: topicFilter.value,
+      difficulty_level: difficultyLevelFilter.value,
+      source_year: yearFilter.value,
+      status: statusFilter.value,
+    })
     total.value = countResult?.total || 0
   } catch (e) {
     console.error('loadQuestions error:', e)

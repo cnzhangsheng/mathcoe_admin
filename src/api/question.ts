@@ -58,7 +58,8 @@ export const questionApi = {
   update: (id: number, data: QuestionUpdate) => request.put<Question>(`/admin/questions/${id}`, data),
   delete: (id: number) => request.delete(`/admin/questions/${id}`),
   batchDelete: (ids: number[]) => request.post<{ message: string; deleted_count: number }>('/admin/questions/batch-delete', ids),
-  getCount: (topicId?: number) => request.get<{ total: number }>('/admin/stats/questions', { params: { topic_id: topicId } }),
+  getCount: (params?: { topic_id?: number; difficulty_level?: number; source_year?: number; status?: string }) =>
+    request.get<{ total: number }>('/admin/stats/questions', { params }),
   publish: (id: number) => request.post(`/admin/questions/${id}/publish`),
   unpublish: (id: number) => request.post(`/admin/questions/${id}/unpublish`),
   batchPublish: (ids: number[]) => request.post<{ message: string; updated_count: number }>('/admin/questions/batch-publish', ids),
