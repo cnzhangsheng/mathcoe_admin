@@ -281,7 +281,7 @@ onMounted(loadExamPapers)
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑考卷' : '新增考卷'" width="500px">
       <el-form :model="formData" label-width="100px">
         <el-form-item label="标题" required>
-          <el-input v-model="formData.title" placeholder="如：袋鼠数学Level A 10题训练卷" />
+          <el-input v-model="formData.title" placeholder="如：Level A 10题训练卷" />
         </el-form-item>
         <el-form-item label="等级" required>
           <el-select v-model="formData.difficulty_level" placeholder="选择等级">
