@@ -16,6 +16,7 @@ const topicFilter = ref<number | undefined>(undefined)
 const difficultyLevelFilter = ref<number | undefined>(undefined)
 const yearFilter = ref<number | undefined>(undefined)
 const statusFilter = ref<string | undefined>(undefined)
+const contentFilter = ref<string>('')
 const total = ref(0)
 
 const selectedQuestions = ref<Question[]>([])
@@ -75,7 +76,7 @@ const loadQuestions = async () => {
   loading.value = true
   selectedQuestions.value = []
   try {
-    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number; status?: string } = {
+    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number; status?: string; content?: string } = {
       page: page.value,
       size: size.value
     }
@@ -83,12 +84,14 @@ const loadQuestions = async () => {
     if (difficultyLevelFilter.value) params.difficulty_level = difficultyLevelFilter.value
     if (yearFilter.value) params.source_year = yearFilter.value
     if (statusFilter.value) params.status = statusFilter.value
+    if (contentFilter.value) params.content = contentFilter.value
     questions.value = await questionApi.list(params)
     const countResult = await questionApi.getCount({
       topic_id: topicFilter.value,
       difficulty_level: difficultyLevelFilter.value,
       source_year: yearFilter.value,
       status: statusFilter.value,
+      content: contentFilter.value || undefined,
     })
     total.value = countResult?.total || 0
   } catch (e) {
@@ -510,6 +513,13 @@ onMounted(async () => {
           <el-option label="已发布" value="published" />
           <el-option label="未发布" value="unpublished" />
         </el-select>
+        <el-input
+          v-model="contentFilter"
+          clearable
+          placeholder="搜索题目内容"
+          @change="handleFilter"
+          style="width: 200px"
+        />
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button type="success" :icon="FolderOpened" @click="openBatchDialog">批量导入</el-button>
         <el-button
