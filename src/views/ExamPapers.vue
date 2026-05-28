@@ -18,7 +18,7 @@ const paperTypeFilter = ref<string | undefined>(undefined)
 const showDialog = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
-const formData = ref<ExamPaperCreate>({
+const formData = ref<ExamPaperCreate & { id?: number }>({
   title: '',
   difficulty_level: 1,
   total_questions: 10,
@@ -72,7 +72,8 @@ const openCreate = () => {
     difficulty_level: 1,
     total_questions: 10,
     description: '',
-    paper_type: 'daily'
+    paper_type: 'daily',
+    id: undefined
   }
   showDialog.value = true
 }
@@ -81,6 +82,7 @@ const openEdit = (paper: ExamPaper) => {
   isEdit.value = true
   editId.value = paper.id
   formData.value = {
+    id: paper.id,
     title: paper.title,
     difficulty_level: paper.difficulty_level,
     total_questions: paper.total_questions,
@@ -99,11 +101,20 @@ const handleSubmit = async () => {
     ElMessage.warning('请选择考卷等级')
     return
   }
+  if (isEdit.value) {
+    const idStr = String(formData.value.id || '')
+    if (!/^\d{12}$/.test(idStr)) {
+      ElMessage.warning('考卷ID必须为12位数字')
+      return
+    }
+  }
 
   submitting.value = true
   try {
     if (isEdit.value && editId.value) {
-      await examPaperApi.update(editId.value, formData.value)
+      const updateData: Record<string, any> = { ...formData.value }
+      if (updateData.id === editId.value) delete updateData.id  // ID 未变则不发
+      await examPaperApi.update(editId.value, updateData)
       ElMessage.success('更新成功')
     } else {
       await examPaperApi.create(formData.value)
@@ -280,6 +291,9 @@ onMounted(loadExamPapers)
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑考卷' : '新增考卷'" width="500px">
       <el-form :model="formData" label-width="100px">
+        <el-form-item v-if="isEdit" label="考卷ID" required>
+          <el-input :model-value="formData.id ? String(formData.id) : ''" @update:model-value="v => formData.id = v ? Number(v.replace(/\D/g, '').slice(0, 12)) : undefined" placeholder="如：202401010001" />
+        </el-form-item>
         <el-form-item label="标题" required>
           <el-input v-model="formData.title" placeholder="如：Level A 10题训练卷" />
         </el-form-item>

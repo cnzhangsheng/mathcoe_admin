@@ -23,6 +23,7 @@ export interface ExamPaperCreate {
 }
 
 export interface ExamPaperUpdate {
+  id?: number
   title?: string
   difficulty_level?: number
   total_questions?: number
