@@ -17,6 +17,7 @@ const difficultyLevelFilter = ref<number | undefined>(undefined)
 const yearFilter = ref<number | undefined>(undefined)
 const statusFilter = ref<string | undefined>(undefined)
 const contentFilter = ref<string>('')
+const sortOrder = ref<string>('desc')
 const total = ref(0)
 
 const selectedQuestions = ref<Question[]>([])
@@ -76,9 +77,10 @@ const loadQuestions = async () => {
   loading.value = true
   selectedQuestions.value = []
   try {
-    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number; status?: string; content?: string } = {
+    const params: { page: number; size: number; topic_id?: number; difficulty_level?: number; source_year?: number; status?: string; content?: string; sort_order?: string } = {
       page: page.value,
-      size: size.value
+      size: size.value,
+      sort_order: sortOrder.value
     }
     if (topicFilter.value) params.topic_id = topicFilter.value
     if (difficultyLevelFilter.value) params.difficulty_level = difficultyLevelFilter.value
@@ -520,6 +522,15 @@ onMounted(async () => {
           @change="handleFilter"
           style="width: 200px"
         />
+        <el-select
+          v-model="sortOrder"
+          placeholder="ID排序"
+          @change="handleFilter"
+          style="width: 120px"
+        >
+          <el-option label="ID降序" value="desc" />
+          <el-option label="ID升序" value="asc" />
+        </el-select>
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button type="success" :icon="FolderOpened" @click="openBatchDialog">批量导入</el-button>
         <el-button

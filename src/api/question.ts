@@ -51,6 +51,7 @@ export interface QuestionListParams {
   source_year?: number
   status?: string  // published | unpublished
   content?: string  // 题目内容搜索
+  sort_order?: string  // asc | desc
 }
 
 export const questionApi = {

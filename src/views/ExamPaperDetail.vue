@@ -80,13 +80,14 @@ const openAddQuestion = async () => {
 const loadQuestionList = async () => {
   questionLoading.value = true
   try {
-    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number; status?: string } = {
+    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number; status?: string; sort_order?: string } = {
       page: questionPage.value,
       size: 50,
       difficulty_level: questionLevelFilter.value,
       topic_id: questionTopicFilter.value,
       source_year: questionYearFilter.value,
-      status: 'published'
+      status: 'published',
+      sort_order: 'asc'
     }
     questionList.value = await questionApi.list(params)
   } catch (e) {
@@ -119,6 +120,30 @@ const addQuestion = async (questionId: number) => {
   } catch (e) {
     console.error('addQuestion error:', e)
     ElMessage.error('添加失败')
+  }
+}
+
+const addingAll = ref(false)
+const addAllQuestions = async () => {
+  const toAdd = questionList.value.filter(q => !isQuestionAdded(q.id))
+  if (toAdd.length === 0) {
+    ElMessage.warning('当前页面没有可添加的题目')
+    return
+  }
+  addingAll.value = true
+  let successCount = 0
+  try {
+    for (const q of toAdd) {
+      await examPaperApi.addQuestion(examPaperId, { question_id: q.id })
+      successCount++
+    }
+    ElMessage.success(`已添加 ${successCount} 道题目`)
+    await loadExamPaper()
+  } catch (e) {
+    console.error('addAllQuestions error:', e)
+    ElMessage.error(`已添加 ${successCount} 道，部分添加失败`)
+  } finally {
+    addingAll.value = false
   }
 }
 
@@ -332,9 +357,13 @@ onMounted(async () => {
           @change="handleQuestionFilter"
           style="width: 140px"
         />
+        <el-button type="success" @click="addAllQuestions" :loading="addingAll">
+          添加全部
+        </el-button>
       </div>
 
       <el-table :data="questionList" v-loading="questionLoading" stripe height="500">
+        <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="id" label="ID" width="120" />
         <el-table-column label="主题" width="120">
           <template #default="{ row }">
@@ -346,7 +375,7 @@ onMounted(async () => {
             <span class="content-text">{{ row.content?.text ? row.content.text.replace(/<img[^>]*>/gi, '').replace(/<[^>]+>/g, '').trim() : '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="难度级别" width="80">
+        <el-table-column label="难度级别" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.difficulty_level" type="info">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty_level)?.label || ('L' + row.difficulty_level) }}</el-tag>
             <span v-else>-</span>
