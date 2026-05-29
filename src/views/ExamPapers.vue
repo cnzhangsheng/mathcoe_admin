@@ -23,9 +23,13 @@ const formData = ref<ExamPaperCreate & { id?: number }>({
   difficulty_level: 1,
   total_questions: 10,
   description: '',
-  paper_type: 'daily'
+  paper_type: 'daily',
+  created_at: undefined
 })
 const editId = ref<number | null>(null)
+
+const editingDateId = ref<number | null>(null)
+const dateLoadingId = ref<number | null>(null)
 
 const levelOptions = DIFFICULTY_LEVELS.map(l => l.value)
 const paperTypeOptions = [
@@ -73,7 +77,8 @@ const openCreate = () => {
     total_questions: 10,
     description: '',
     paper_type: 'daily',
-    id: undefined
+    id: undefined,
+    created_at: undefined
   }
   showDialog.value = true
 }
@@ -87,7 +92,8 @@ const openEdit = (paper: ExamPaper) => {
     difficulty_level: paper.difficulty_level,
     total_questions: paper.total_questions,
     description: paper.description || '',
-    paper_type: paper.paper_type
+    paper_type: paper.paper_type,
+    created_at: paper.created_at || undefined
   }
   showDialog.value = true
 }
@@ -193,6 +199,26 @@ const handleToggleStatus = async (row: ExamPaper, newStatus: string) => {
   }
 }
 
+const handleDateChange = async (row: ExamPaper) => {
+  if (!row.created_at) return
+  dateLoadingId.value = row.id
+  try {
+    await examPaperApi.update(row.id, { created_at: row.created_at })
+    ElMessage.success('创建时间已更新')
+  } catch (e) {
+    console.error('handleDateChange error:', e)
+    ElMessage.error('更新失败')
+    loadExamPapers()
+  } finally {
+    dateLoadingId.value = null
+    editingDateId.value = null
+  }
+}
+
+const editDate = (row: ExamPaper) => {
+  editingDateId.value = row.id
+}
+
 onMounted(loadExamPapers)
 </script>
 
@@ -261,6 +287,26 @@ onMounted(loadExamPapers)
             <span>{{ row.total_questions }}题</span>
           </template>
         </el-table-column>
+        <el-table-column prop="created_at" label="创建时间" width="190">
+          <template #default="{ row }">
+            <template v-if="editingDateId === row.id">
+              <el-date-picker
+                v-model="row.created_at"
+                type="datetime"
+                value-format="YYYY-MM-DDTHH:mm:ss"
+                placeholder="选择时间"
+                size="small"
+                :loading="dateLoadingId === row.id"
+                @change="handleDateChange(row)"
+                @blur="editingDateId = null"
+                style="width: 170px"
+              />
+            </template>
+            <span v-else class="editable-date" @click="editDate(row)">
+              {{ row.created_at ? row.created_at.slice(0, 16).replace('T', ' ') : '-' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="description" label="描述" min-width="150">
           <template #default="{ row }">
             <span>{{ row.description || '-' }}</span>
@@ -291,8 +337,8 @@ onMounted(loadExamPapers)
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑考卷' : '新增考卷'" width="500px">
       <el-form :model="formData" label-width="100px">
-        <el-form-item v-if="isEdit" label="考卷ID" required>
-          <el-input :model-value="formData.id ? String(formData.id) : ''" @update:model-value="v => formData.id = v ? Number(v.replace(/\D/g, '').slice(0, 12)) : undefined" placeholder="如：202401010001" />
+        <el-form-item v-if="isEdit" label="考卷ID">
+          <el-input :model-value="formData.id ? String(formData.id) : ''" disabled />
         </el-form-item>
         <el-form-item label="标题" required>
           <el-input v-model="formData.title" placeholder="如：Level A 10题训练卷" />
@@ -312,6 +358,15 @@ onMounted(loadExamPapers)
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="formData.description" type="textarea" placeholder="考卷描述" />
+        </el-form-item>
+        <el-form-item label="创建时间">
+          <el-date-picker
+            v-model="formData.created_at"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选择创建时间（不填则使用当前时间）"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -333,5 +388,11 @@ onMounted(loadExamPapers)
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.editable-date {
+  cursor: pointer;
+  border-bottom: 1px dashed #aaa;
+  padding-bottom: 1px;
 }
 </style>
