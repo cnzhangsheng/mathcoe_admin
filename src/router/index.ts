@@ -68,6 +68,11 @@ const routes = [
         component: () => import('@/views/Feedbacks.vue')
       },
       {
+        path: 'pdf-downloads',
+        name: 'PdfDownloads',
+        component: () => import('@/views/PdfDownloads.vue')
+      },
+      {
         path: 'system/data-backup',
         name: 'DataBackup',
         component: () => import('@/views/system/DataBackup.vue')
