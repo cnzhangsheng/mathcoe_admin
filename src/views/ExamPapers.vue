@@ -34,7 +34,6 @@ const dateLoadingId = ref<number | null>(null)
 const levelOptions = DIFFICULTY_LEVELS.map(l => l.value)
 const paperTypeOptions = [
   { value: 'daily', label: '练习卷' },
-  { value: 'mock', label: '模拟卷' },
   { value: 'topic', label: '专题卷' },
   { value: 'past', label: '真题卷' },
   { value: 'custom', label: '自编卷' }
@@ -265,7 +264,7 @@ onMounted(loadExamPapers)
         </el-table-column>
         <el-table-column prop="paper_type" label="类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'mock' ? 'warning' : row.paper_type === 'past' ? 'danger' : 'info'">
+            <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'past' ? 'danger' : 'info'">
               {{ paperTypeOptions.find(t => t.value === row.paper_type)?.label || row.paper_type }}
             </el-tag>
           </template>

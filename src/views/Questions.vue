@@ -58,6 +58,23 @@ const formData = ref<{
 
 const editId = ref<number | null>(null)
 
+const explanationDialogVisible = ref(false)
+const editingExplanationQuestion = ref<Question | null>(null)
+const explanationContent = ref('')
+
+const openExplanationDialog = (question: Question) => {
+  editingExplanationQuestion.value = question
+  explanationContent.value = question.explanation?.text || ''
+  explanationDialogVisible.value = true
+}
+
+const submitExplanation = async () => {
+  const question = editingExplanationQuestion.value
+  if (!question) return
+  await saveExplanation(question, explanationContent.value)
+  explanationDialogVisible.value = false
+}
+
 const answerOptions = computed(() => {
   return formData.value.options.map(opt => ({
     label: opt.label,
@@ -399,6 +416,19 @@ const saveField = async (question: Question, field: string, value: any) => {
   }
 }
 
+const saveExplanation = async (question: Question, value: string) => {
+  try {
+    await questionApi.update(question.id, { explanation: { text: value } })
+    question.explanation = { text: value }
+    ElMessage.success('更新成功')
+  } catch (e) {
+    console.error('saveExplanation error:', e)
+    ElMessage.error('更新失败')
+  } finally {
+    stopEdit(question.id, 'explanation')
+  }
+}
+
 const getOptionLabels = (question: Question): string[] => {
   if (!question.options) return ['A', 'B', 'C', 'D', 'E']
   return question.options.map(o => o.label)
@@ -477,7 +507,7 @@ onMounted(async () => {
   <div class="questions-page">
     <h2>题目管理</h2>
     <el-card>
-      <div class="action-bar">
+      <div class="filter-bar">
         <el-select
           v-model="topicFilter"
           clearable
@@ -531,6 +561,8 @@ onMounted(async () => {
           <el-option label="ID降序" value="desc" />
           <el-option label="ID升序" value="asc" />
         </el-select>
+      </div>
+      <div class="action-bar">
         <el-button type="primary" :icon="Plus" @click="openCreate">新增题目</el-button>
         <el-button type="success" :icon="FolderOpened" @click="openBatchDialog">批量导入</el-button>
         <el-button
@@ -564,7 +596,6 @@ onMounted(async () => {
             <span>{{ (page - 1) * size + $index + 1 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="id" label="ID" width="120" />
         <el-table-column prop="topic_id" label="专题" width="140">
           <template #default="{ row }">
             <div v-if="!editingCell[`${row.id}-topic`]" @click="startEdit(row.id, 'topic')" style="cursor: pointer; min-height: 24px;">
@@ -611,6 +642,13 @@ onMounted(async () => {
             >
               <el-option v-for="label in getOptionLabels(row)" :key="label" :label="label" :value="label" />
             </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="答案解析" min-width="200">
+          <template #default="{ row }">
+            <div style="cursor: pointer; min-height: 24px;" @click="openExplanationDialog(row)">
+              <span class="explanation-text">{{ row.explanation?.text ? row.explanation.text.replace(/<[^>]+>/g, '').trim() || '(空)' : '(空)' }}</span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="难度" width="80">
@@ -825,6 +863,15 @@ onMounted(async () => {
         <el-button type="primary" :loading="submitting" :disabled="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 答案解析编辑弹窗 -->
+    <el-dialog v-model="explanationDialogVisible" title="编辑答案解析" width="700px">
+      <RichEditor v-model="explanationContent" placeholder="请输入答案解析" height="250px" />
+      <template #footer>
+        <el-button @click="explanationDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitExplanation">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -834,11 +881,20 @@ onMounted(async () => {
   color: #304156;
 }
 
+.filter-bar {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .action-bar {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .options-editor {
@@ -858,6 +914,14 @@ onMounted(async () => {
   color: #333;
   font-size: 13px;
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.explanation-text {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
 }

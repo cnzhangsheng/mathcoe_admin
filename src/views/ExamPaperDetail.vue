@@ -29,7 +29,7 @@ const questionTopicFilter = ref<number | undefined>(undefined)
 const questionYearFilter = ref<number | undefined>(undefined)
 
 const paperTypeLabel = computed(() => {
-  const types: Record<string, string> = { daily: '练习卷', mock: '模拟卷', topic: '专题卷', past: '真题卷' }
+  const types: Record<string, string> = { daily: '练习卷', topic: '专题卷', past: '真题卷' }
   return types[examPaper.value?.paper_type || 'daily'] || '未知'
 })
 
@@ -264,7 +264,7 @@ onMounted(async () => {
             <el-tag type="primary">{{ DIFFICULTY_LEVELS.find(l => l.value === examPaper.difficulty_level)?.label || ('Level ' + examPaper.difficulty_level) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="类型">
-            <el-tag :type="examPaper.paper_type === 'daily' ? 'success' : examPaper.paper_type === 'mock' ? 'warning' : 'info'">
+            <el-tag :type="examPaper.paper_type === 'daily' ? 'success' : 'info'">
               {{ paperTypeLabel }}
             </el-tag>
           </el-descriptions-item>

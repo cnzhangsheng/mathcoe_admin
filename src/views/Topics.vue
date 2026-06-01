@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { topicApi, type Topic, type TopicCreate } from '@/api/topic'
 import { ElMessage } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
 const topics = ref<Topic[]>([])
 const loading = ref(false)
@@ -12,7 +13,7 @@ const isEdit = ref(false)
 const formData = ref<TopicCreate>({
   title: '',
   description: '',
-  difficulty: '',
+  difficulty: 2,
   icon: '',
   color: '',
   is_high_freq: false
@@ -30,7 +31,7 @@ const loadTopics = async () => {
 
 const openCreate = () => {
   isEdit.value = false
-  formData.value = { title: '', description: '', difficulty: '', icon: '', color: '', is_high_freq: false }
+  formData.value = { title: '', description: '', difficulty: 2, icon: '', color: '', is_high_freq: false }
   showDialog.value = true
 }
 
@@ -40,7 +41,7 @@ const openEdit = (topic: Topic) => {
   formData.value = {
     title: topic.title,
     description: topic.description || '',
-    difficulty: topic.difficulty || '',
+    difficulty: topic.difficulty ?? 2,
     icon: topic.icon || '',
     color: topic.color || '',
     is_high_freq: topic.is_high_freq
@@ -94,7 +95,7 @@ onMounted(loadTopics)
         <el-table-column prop="description" label="描述" />
         <el-table-column prop="difficulty" label="难度" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.difficulty">{{ row.difficulty }}</el-tag>
+            <el-tag v-if="row.difficulty" type="info">{{ DIFFICULTY_LEVELS.find(l => l.value === row.difficulty)?.label || ('Level ' + row.difficulty) }}</el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -123,9 +124,7 @@ onMounted(loadTopics)
         </el-form-item>
         <el-form-item label="难度">
           <el-select v-model="formData.difficulty" clearable placeholder="选择难度">
-            <el-option label="L1-L2" value="L1-L2" />
-            <el-option label="L2-L3" value="L2-L3" />
-            <el-option label="L3-L4" value="L3-L4" />
+            <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="图标">

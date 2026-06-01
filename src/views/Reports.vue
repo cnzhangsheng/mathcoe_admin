@@ -181,7 +181,7 @@ onMounted(() => {
             <el-table :data="examPaperStats.type_stats" stripe>
               <el-table-column label="类型" width="120">
                 <template #default="{ row }">
-                  <el-tag :type="row.paper_type === 'daily' ? 'success' : row.paper_type === 'mock' ? 'warning' : 'info'">{{ row.type_label }}</el-tag>
+                  <el-tag :type="row.paper_type === 'daily' ? 'success' : 'info'">{{ row.type_label }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="测试次数" width="100" prop="test_count" />
@@ -203,7 +203,7 @@ onMounted(() => {
                 <span class="top-rank">{{ index + 1 }}</span>
                 <span class="top-name">{{ item.title }}</span>
                 <div class="top-meta">
-                  <el-tag size="small" :type="item.paper_type === 'daily' ? 'success' : item.paper_type === 'mock' ? 'warning' : 'info'">{{ item.type_label }}</el-tag>
+                  <el-tag size="small" :type="item.paper_type === 'daily' ? 'success' : 'info'">{{ item.type_label }}</el-tag>
                   <span class="meta-text">{{ item.test_count }} 次</span>
                   <span class="meta-text">均分 {{ item.avg_score }}</span>
                 </div>

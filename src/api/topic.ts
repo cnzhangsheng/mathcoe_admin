@@ -4,7 +4,7 @@ export interface Topic {
   id: number
   title: string
   description: string | null
-  difficulty: string | null
+  difficulty: number | null
   icon: string | null
   color: string | null
   is_high_freq: boolean
@@ -13,7 +13,7 @@ export interface Topic {
 export interface TopicCreate {
   title: string
   description?: string
-  difficulty?: string
+  difficulty?: number
   icon?: string
   color?: string
   is_high_freq?: boolean
@@ -22,7 +22,7 @@ export interface TopicCreate {
 export interface TopicUpdate {
   title?: string
   description?: string
-  difficulty?: string
+  difficulty?: number
   icon?: string
   color?: string
   is_high_freq?: boolean
