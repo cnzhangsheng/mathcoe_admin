@@ -125,8 +125,7 @@ onMounted(() => {
                         <div class="qr-body" v-html="item.content"></div>
                         <div class="top-meta">
                           <span class="meta-text">{{ item.topic_title }}</span>
-                          <span class="meta-text">{{ item.practice_count }} 次练习</span>
-                          <span class="meta-text">{{ item.user_count }} 人</span>
+                          <span class="meta-text">{{ item.practice_count }} 人练习</span>
                         </div>
                       </div>
                     </div>
@@ -146,8 +145,7 @@ onMounted(() => {
                         <div class="qr-body" v-html="item.content"></div>
                         <div class="top-meta">
                           <span class="meta-text">{{ item.topic_title }}</span>
-                          <span class="meta-text">{{ item.favorite_count }} 次收藏</span>
-                          <span class="meta-text">{{ item.fav_user_count }} 人</span>
+                          <span class="meta-text">{{ item.favorite_count }} 人收藏</span>
                         </div>
                       </div>
                     </div>
