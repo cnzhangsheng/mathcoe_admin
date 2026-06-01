@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem, type ExamPaperStatsReport } from '@/api/report'
+import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem, type ExamPaperStatsReport, type QuestionRankingItem } from '@/api/report'
 import { ElMessage } from 'element-plus'
+import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
 
-const activeTab = ref('question-type')
+const activeTab = ref('question-ranking')
 
 // === 题型偏好报表 ===
 const questionTypeItems = ref<QuestionTypeReportItem[]>([])
@@ -50,6 +51,8 @@ const handleTabClick = (tab: { paneName: string }) => {
     loadTopicPreferenceReport()
   } else if (tab.paneName === 'exam-paper' && !examPaperStats.value) {
     loadExamPaperStatsReport()
+  } else if (tab.paneName === 'question-ranking' && Object.keys(hotQuestions.value).length === 0) {
+    loadQuestionRankingReport()
   }
 }
 
@@ -69,7 +72,32 @@ const loadExamPaperStatsReport = async () => {
   }
 }
 
+// === 题目排行报表 ===
+const hotQuestions = ref<Record<string, QuestionRankingItem[]>>({})
+const favoriteQuestions = ref<Record<string, QuestionRankingItem[]>>({})
+const qrLoading = ref(false)
+const qrLevelTab = ref('1')
+
+const loadQuestionRankingReport = async () => {
+  qrLoading.value = true
+  try {
+    const data = await reportApi.getQuestionRankingReport()
+    hotQuestions.value = {}
+    favoriteQuestions.value = {}
+    for (const [level, levelData] of Object.entries(data)) {
+      hotQuestions.value[level] = levelData.hot_questions
+      favoriteQuestions.value[level] = levelData.favorite_questions
+    }
+  } catch (e) {
+    console.error('loadQuestionRankingReport error:', e)
+    ElMessage.error('加载题目排行报表失败')
+  } finally {
+    qrLoading.value = false
+  }
+}
+
 onMounted(() => {
+  loadQuestionRankingReport()
   loadQuestionTypeReport()
 })
 </script>
@@ -79,6 +107,59 @@ onMounted(() => {
     <h2>运营报表</h2>
 
     <el-tabs v-model="activeTab" type="border-card" @tab-click="handleTabClick">
+      <!-- 题目排行报表 -->
+      <el-tab-pane label="题目排行报表" name="question-ranking">
+        <div v-loading="qrLoading">
+          <el-tabs v-model="qrLevelTab" type="card" @tab-click="() => {}">
+            <el-tab-pane v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :name="String(l.value)">
+              <div class="top-grid">
+                <el-card>
+                  <template #header><span class="card-title">🔥 热门题目 TOP 20</span></template>
+                  <div v-if="hotQuestions[l.value]?.length">
+                    <div v-for="(item, index) in hotQuestions[l.value]" :key="item.id" class="top-item qr-item">
+                      <span class="top-rank">{{ index + 1 }}</span>
+                      <div class="top-content">
+                        <div class="qr-header">
+                          <span class="qr-id">#{{ item.id }}</span>
+                        </div>
+                        <div class="qr-body" v-html="item.content"></div>
+                        <div class="top-meta">
+                          <span class="meta-text">{{ item.topic_title }}</span>
+                          <span class="meta-text">{{ item.practice_count }} 次练习</span>
+                          <span class="meta-text">{{ item.user_count }} 人</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="empty-tip">暂无数据</div>
+                </el-card>
+
+                <el-card>
+                  <template #header><span class="card-title">⭐ 收藏题目 TOP 20</span></template>
+                  <div v-if="favoriteQuestions[l.value]?.length">
+                    <div v-for="(item, index) in favoriteQuestions[l.value]" :key="item.id" class="top-item qr-item">
+                      <span class="top-rank">{{ index + 1 }}</span>
+                      <div class="top-content">
+                        <div class="qr-header">
+                          <span class="qr-id">#{{ item.id }}</span>
+                        </div>
+                        <div class="qr-body" v-html="item.content"></div>
+                        <div class="top-meta">
+                          <span class="meta-text">{{ item.topic_title }}</span>
+                          <span class="meta-text">{{ item.favorite_count }} 次收藏</span>
+                          <span class="meta-text">{{ item.fav_user_count }} 人</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="empty-tip">暂无数据</div>
+                </el-card>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+      </el-tab-pane>
+
       <!-- 题型偏好报表 -->
       <el-tab-pane label="用户题型偏好报表" name="question-type">
         <el-card v-loading="qtLoading">
@@ -223,7 +304,8 @@ onMounted(() => {
           <div v-if="!examPaperStats && !epLoading" class="empty-tip">暂无数据</div>
         </div>
       </el-tab-pane>
-    </el-tabs>
+
+      </el-tabs>
   </div>
 </template>
 
@@ -305,6 +387,49 @@ onMounted(() => {
 .top-name {
   flex: 1;
   font-size: 14px;
+}
+
+.qr-item {
+  align-items: flex-start;
+}
+
+.qr-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.qr-id {
+  font-size: 11px;
+  color: #909399;
+  background: #f0f2f5;
+  padding: 0 6px;
+  border-radius: 3px;
+  line-height: 18px;
+  flex-shrink: 0;
+}
+
+.top-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.qr-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.qr-body :deep(p) {
+  margin: 0;
+}
+
+.qr-body :deep(img) {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 4px;
 }
 
 .stats-cards {

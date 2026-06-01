@@ -61,8 +61,28 @@ export interface ExamPaperStatsReport {
   score_distribution: ScoreDistItem[]
 }
 
+export interface QuestionRankingItem {
+  id: number
+  title: string
+  content: string
+  difficulty_level: number
+  topic_title: string
+  practice_count?: number
+  user_count?: number
+  favorite_count?: number
+  fav_user_count?: number
+}
+
+export interface QuestionRankingLevel {
+  hot_questions: QuestionRankingItem[]
+  favorite_questions: QuestionRankingItem[]
+}
+
+export type QuestionRankingReport = Record<string, QuestionRankingLevel>
+
 export const reportApi = {
   getQuestionTypeReport: () => request.get<QuestionTypeReport>('/admin/reports/question-type'),
   getTopicPreferenceReport: () => request.get<TopicPreferenceReport>('/admin/reports/topic-preference'),
   getExamPaperStatsReport: () => request.get<ExamPaperStatsReport>('/admin/reports/exam-paper-stats'),
+  getQuestionRankingReport: () => request.get<QuestionRankingReport>('/admin/reports/question-ranking'),
 }
