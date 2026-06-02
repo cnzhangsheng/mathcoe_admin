@@ -175,6 +175,9 @@ onMounted(() => loadData())
             </div>
             <input type="file" accept="image/*" class="upload-input" @change="handleUpload" />
           </div>
+          <div v-if="formData.position === 'home'" class="size-tip">
+            首页展示位置建议图片尺寸 <strong>750×250 px</strong>，大小不超过 <strong>200KB</strong>
+          </div>
         </el-form-item>
         <el-form-item label="标题">
           <el-input v-model="formData.title" placeholder="Banner标题（alt文本）" />
@@ -193,7 +196,7 @@ onMounted(() => loadData())
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="formData.link_type === 'content' ? '选择内容' : '链接地址'">
-          <el-select v-if="formData.link_type === 'content'" v-model="formData.link_value" placeholder="请选择已发布的内容" filterable style="width: 100%;">
+          <el-select v-if="formData.link_type === 'content'" v-model="formData.link_value" placeholder="请选择已发布的内容" filterable clearable style="width: 100%;">
             <el-option v-for="c in getPublishedContentList()" :key="c.id" :label="c.title" :value="c.slug" />
           </el-select>
           <el-input v-else v-model="formData.link_value" placeholder="https://..." />
@@ -264,5 +267,17 @@ onMounted(() => loadData())
   height: 100%;
   opacity: 0;
   cursor: pointer;
+}
+.size-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.6;
+  background: #f0f9eb;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+.size-tip strong {
+  color: #67c23a;
 }
 </style>
