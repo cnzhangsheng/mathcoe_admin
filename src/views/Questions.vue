@@ -37,6 +37,7 @@ const formData = ref<{
   explanation_html: string
   difficulty_level: number | undefined
   source_year: number | undefined
+  tags: string[]
 }>({
   title: '',
   topic_id: undefined,
@@ -53,7 +54,8 @@ const formData = ref<{
   answerMultiple: [],
   explanation_html: '',
   difficulty_level: undefined,
-  source_year: undefined
+  source_year: undefined,
+  tags: []
 })
 
 const editId = ref<number | null>(null)
@@ -199,7 +201,8 @@ const openEdit = (question: Question) => {
       answerMultiple: question.question_type === 'multiple' ? (question.answer || '').split(',') : [],
       explanation_html: explanationHtml,
       difficulty_level: question.difficulty_level,
-      source_year: question.source_year
+      source_year: question.source_year,
+      tags: question.tags || []
     }
     showDialog.value = true
   } catch (e) {
@@ -271,7 +274,8 @@ const handleSubmit = async () => {
       answer: answerStr,
       explanation: { text: formData.value.explanation_html, format: 'html' },
       difficulty_level: formData.value.difficulty_level,
-      source_year: formData.value.source_year
+      source_year: formData.value.source_year,
+      tags: formData.value.tags
     }
 
     if (isEdit.value && editId.value) {
@@ -670,6 +674,30 @@ onMounted(async () => {
             </el-select>
           </template>
         </el-table-column>
+        <el-table-column label="标签" min-width="160">
+          <template #default="{ row }">
+            <div v-if="!editingCell[`${row.id}-tags`]" @click="startEdit(row.id, 'tags')" style="cursor: pointer; min-height: 24px;">
+              <el-tag v-for="tag in (row.tags || [])" :key="tag" size="small" style="margin: 1px 2px;">{{ tag }}</el-tag>
+              <span v-if="!row.tags || row.tags.length === 0" style="color: #c0c4cc;">点击设置标签</span>
+            </div>
+            <el-select
+              v-else
+              :model-value="row.tags || []"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              size="small"
+              style="width: 150px;"
+              @change="(val: string[]) => saveField(row, 'tags', val)"
+              @blur="() => stopEdit(row.id, 'tags')"
+              @visible-change="(visible: boolean) => { if (!visible) stopEdit(row.id, 'tags') }"
+              autofocus
+            >
+              <el-option v-for="tag in (row.tags || [])" :key="tag" :label="tag" :value="tag" />
+            </el-select>
+          </template>
+        </el-table-column>
         <el-table-column label="年份" width="100">
           <template #default="{ row }">
             <div v-if="!editingCell[`${row.id}-year`]" @click="startEdit(row.id, 'year')" style="cursor: pointer; min-height: 24px;">
@@ -855,6 +883,20 @@ onMounted(async () => {
         <el-form-item label="真题年份">
           <el-input-number v-model="formData.source_year" :min="2000" :max="2030" placeholder="真题年份" :controls="false" style="width: 150px" />
           <el-button v-if="formData.source_year" type="text" @click="formData.source_year = undefined" style="margin-left: 10px">清除</el-button>
+        </el-form-item>
+
+        <el-form-item label="标签">
+          <el-select
+            v-model="formData.tags"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="输入标签后按回车添加"
+            style="width: 100%"
+          >
+            <el-option v-for="tag in formData.tags" :key="tag" :label="tag" :value="tag" />
+          </el-select>
         </el-form-item>
       </el-form>
 
