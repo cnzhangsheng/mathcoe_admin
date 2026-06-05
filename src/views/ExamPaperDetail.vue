@@ -24,9 +24,14 @@ const showQuestionDialog = ref(false)
 const questionList = ref<Question[]>([])
 const questionLoading = ref(false)
 const questionPage = ref(1)
+const questionPageSize = ref(100)
+const questionTotal = ref(0)
 const questionLevelFilter = ref<number | undefined>(undefined)
 const questionTopicFilter = ref<number | undefined>(undefined)
 const questionYearFilter = ref<number | undefined>(undefined)
+const questionStatusFilter = ref<string | undefined>(undefined)
+const questionContentFilter = ref<string>('')
+const questionSortOrder = ref<'asc' | 'desc'>('desc')
 
 const paperTypeLabel = computed(() => {
   const types: Record<string, string> = { daily: '练习卷', topic: '专题卷', past: '真题卷' }
@@ -80,16 +85,31 @@ const openAddQuestion = async () => {
 const loadQuestionList = async () => {
   questionLoading.value = true
   try {
-    const params: { page: number; size: number; difficulty_level?: number; topic_id?: number; source_year?: number; status?: string; sort_order?: string } = {
+    const params: Record<string, any> = {
       page: questionPage.value,
-      size: 50,
-      difficulty_level: questionLevelFilter.value,
-      topic_id: questionTopicFilter.value,
-      source_year: questionYearFilter.value,
-      status: 'published',
-      sort_order: 'asc'
+      size: questionPageSize.value,
+      sort_order: questionSortOrder.value
     }
-    questionList.value = await questionApi.list(params)
+    if (questionLevelFilter.value) params.difficulty_level = questionLevelFilter.value
+    if (questionTopicFilter.value) params.topic_id = questionTopicFilter.value
+    if (questionYearFilter.value) params.source_year = questionYearFilter.value
+    if (questionStatusFilter.value) params.status = questionStatusFilter.value
+    if (questionContentFilter.value) params.content = questionContentFilter.value
+
+    // 仅传筛选字段给 count 接口（去掉 page/size/sort_order）
+    const countParams: Record<string, any> = {}
+    if (questionLevelFilter.value) countParams.difficulty_level = questionLevelFilter.value
+    if (questionTopicFilter.value) countParams.topic_id = questionTopicFilter.value
+    if (questionYearFilter.value) countParams.source_year = questionYearFilter.value
+    if (questionStatusFilter.value) countParams.status = questionStatusFilter.value
+    if (questionContentFilter.value) countParams.content = questionContentFilter.value
+
+    const [list, countRes] = await Promise.all([
+      questionApi.list(params),
+      questionApi.getCount(countParams)
+    ])
+    questionList.value = list
+    questionTotal.value = countRes?.total ?? 0
   } catch (e) {
     console.error('loadQuestionList error:', e)
     ElMessage.error('加载题目列表失败')
@@ -328,14 +348,24 @@ onMounted(async () => {
     </el-card>
 
     <!-- 添加题目弹窗 -->
-    <el-dialog v-model="showQuestionDialog" title="选择题目" width="1000px" top="5vh">
+    <el-dialog v-model="showQuestionDialog" title="选择题目" width="1100px" top="5vh">
       <div class="question-filter-bar">
+        <el-select
+          v-model="questionStatusFilter"
+          clearable
+          placeholder="按状态筛选"
+          @change="handleQuestionFilter"
+          style="width: 140px"
+        >
+          <el-option label="已发布" value="published" />
+          <el-option label="未发布" value="unpublished" />
+        </el-select>
         <el-select
           v-model="questionTopicFilter"
           clearable
           placeholder="按专题筛选"
           @change="handleQuestionFilter"
-          style="width: 200px"
+          style="width: 160px"
         >
           <el-option v-for="t in topics" :key="t.id" :label="t.title" :value="t.id" />
         </el-select>
@@ -344,7 +374,7 @@ onMounted(async () => {
           clearable
           placeholder="按难度级别筛选"
           @change="handleQuestionFilter"
-          style="width: 180px"
+          style="width: 160px"
         >
           <el-option v-for="l in DIFFICULTY_LEVELS" :key="l.value" :label="l.label" :value="l.value" />
         </el-select>
@@ -355,8 +385,24 @@ onMounted(async () => {
           :controls="false"
           placeholder="输入年份"
           @change="handleQuestionFilter"
-          style="width: 140px"
+          style="width: 120px"
         />
+        <el-input
+          v-model="questionContentFilter"
+          placeholder="搜索题目内容"
+          clearable
+          @input="handleQuestionFilter"
+          style="width: 200px"
+        />
+        <el-select
+          v-model="questionSortOrder"
+          placeholder="排序"
+          @change="handleQuestionFilter"
+          style="width: 130px"
+        >
+          <el-option label="ID 降序" value="desc" />
+          <el-option label="ID 升序" value="asc" />
+        </el-select>
         <el-button type="success" @click="addAllQuestions" :loading="addingAll">
           添加全部
         </el-button>
@@ -403,8 +449,9 @@ onMounted(async () => {
 
       <el-pagination
         :current-page="questionPage"
-        :page-size="50"
-        layout="prev, pager, next"
+        :page-size="questionPageSize"
+        :total="questionTotal"
+        layout="total, prev, pager, next"
         @current-change="handleQuestionPageChange"
         style="margin-top: 15px"
       />
