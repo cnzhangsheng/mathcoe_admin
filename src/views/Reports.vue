@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem, type ExamPaperStatsReport, type QuestionRankingItem } from '@/api/report'
+import { ref, onMounted, computed } from 'vue'
+import { reportApi, type QuestionTypeReportItem, type TopicPreferenceItem, type ExamPaperStatsReport, type QuestionRankingItem, type PracticeTrendItem } from '@/api/report'
 import { ElMessage } from 'element-plus'
 import { DIFFICULTY_LEVELS } from '@/constants/difficulty'
+import VChart from 'vue-echarts'
+import 'echarts'
 
 const activeTab = ref('question-ranking')
 
@@ -53,6 +55,8 @@ const handleTabClick = (tab: { paneName: string }) => {
     loadExamPaperStatsReport()
   } else if (tab.paneName === 'question-ranking' && Object.keys(hotQuestions.value).length === 0) {
     loadQuestionRankingReport()
+  } else if (tab.paneName === 'practice-trend' && trendItems.value.length === 0) {
+    loadPracticeTrendReport()
   }
 }
 
@@ -94,6 +98,116 @@ const loadQuestionRankingReport = async () => {
   } finally {
     qrLoading.value = false
   }
+}
+
+// === 答题记录趋势报表 ===
+const trendItems = ref<PracticeTrendItem[]>([])
+const trendDays = ref(30)
+const trendLoading = ref(false)
+
+const loadPracticeTrendReport = async () => {
+  trendLoading.value = true
+  try {
+    const data = await reportApi.getPracticeTrendReport(trendDays.value)
+    trendItems.value = data.items
+  } catch (e) {
+    console.error('loadPracticeTrendReport error:', e)
+    ElMessage.error('加载答题记录趋势失败')
+  } finally {
+    trendLoading.value = false
+  }
+}
+
+const trendOption = computed(() => {
+  const dates = trendItems.value.map(i => i.date.slice(5))
+  const practiceCounts = trendItems.value.map(i => i.practice_count)
+  const userCounts = trendItems.value.map(i => i.user_count)
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+    },
+    legend: {
+      data: ['每日答题量', '参与用户数'],
+      top: 0,
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '40px',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      boundaryGap: false,
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11,
+      },
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '答题量',
+        minInterval: 1,
+      },
+      {
+        type: 'value',
+        name: '用户数',
+        minInterval: 1,
+      },
+    ],
+    series: [
+      {
+        name: '每日答题量',
+        type: 'line',
+        data: practiceCounts,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#409eff' },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
+              { offset: 1, color: 'rgba(64, 158, 255, 0.02)' },
+            ],
+          },
+        },
+      },
+      {
+        name: '参与用户数',
+        type: 'line',
+        yAxisIndex: 1,
+        data: userCounts,
+        smooth: true,
+        symbol: 'diamond',
+        symbolSize: 6,
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#67c23a' },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(103, 194, 58, 0.25)' },
+              { offset: 1, color: 'rgba(103, 194, 58, 0.02)' },
+            ],
+          },
+        },
+      },
+    ],
+  }
+})
+
+const changeTrendDays = (days: number) => {
+  trendDays.value = days
+  loadPracticeTrendReport()
 }
 
 onMounted(() => {
@@ -303,6 +417,28 @@ onMounted(() => {
         </div>
       </el-tab-pane>
 
+      <!-- 答题记录趋势报表 -->
+      <el-tab-pane label="答题记录趋势" name="practice-trend">
+        <div v-loading="trendLoading">
+          <div class="trend-toolbar">
+            <div class="trend-days">
+              <el-radio-group :model-value="trendDays" @change="changeTrendDays">
+                <el-radio-button :value="7">近 7 天</el-radio-button>
+                <el-radio-button :value="14">近 14 天</el-radio-button>
+                <el-radio-button :value="30">近 30 天</el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+
+          <el-card>
+            <div style="height: 420px">
+              <v-chart v-if="trendItems.length > 0" :option="trendOption" autoresize style="height: 100%; width: 100%" />
+              <div v-else class="empty-tip">暂无数据</div>
+            </div>
+          </el-card>
+        </div>
+      </el-tab-pane>
+
       </el-tabs>
   </div>
 </template>
@@ -488,5 +624,15 @@ onMounted(() => {
   font-size: 13px;
   color: #909399;
   flex-shrink: 0;
+}
+
+.trend-toolbar {
+  margin-bottom: 16px;
+}
+
+.trend-days {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>

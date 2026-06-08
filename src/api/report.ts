@@ -80,9 +80,20 @@ export interface QuestionRankingLevel {
 
 export type QuestionRankingReport = Record<string, QuestionRankingLevel>
 
+export interface PracticeTrendItem {
+  date: string
+  practice_count: number
+  user_count: number
+}
+
+export interface PracticeTrendReport {
+  items: PracticeTrendItem[]
+}
+
 export const reportApi = {
   getQuestionTypeReport: () => request.get<QuestionTypeReport>('/admin/reports/question-type'),
   getTopicPreferenceReport: () => request.get<TopicPreferenceReport>('/admin/reports/topic-preference'),
   getExamPaperStatsReport: () => request.get<ExamPaperStatsReport>('/admin/reports/exam-paper-stats'),
   getQuestionRankingReport: () => request.get<QuestionRankingReport>('/admin/reports/question-ranking'),
+  getPracticeTrendReport: (days: number = 30) => request.get<PracticeTrendReport>('/admin/reports/practice-trend', { params: { days } }),
 }
